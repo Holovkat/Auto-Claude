@@ -1,5 +1,5 @@
 /**
- * Shared TypeScript interfaces for Auto-Build UI
+ * Shared TypeScript interfaces for Auto Claude UI
  */
 
 // Project Types
@@ -137,7 +137,7 @@ export interface AppSettings {
   notifications: NotificationSettings;
 }
 
-// Auto-Build Initialization Types
+// Auto Claude Initialization Types
 export interface AutoBuildVersionInfo {
   isInitialized: boolean;
   currentVersion?: string;
@@ -756,7 +756,7 @@ export interface ExistingChangelog {
 }
 
 // ============================================
-// Auto-Build Source Update Types
+// Auto Claude Source Update Types
 // ============================================
 
 export interface AutoBuildSourceUpdateCheck {
@@ -911,12 +911,12 @@ export interface ElectronAPI {
     callback: (projectId: string, error: string) => void
   ) => () => void;
 
-  // Auto-Build source update operations
+  // Auto Claude source update operations
   checkAutoBuildSourceUpdate: () => Promise<IPCResult<AutoBuildSourceUpdateCheck>>;
   downloadAutoBuildSourceUpdate: () => void;
   getAutoBuildSourceVersion: () => Promise<IPCResult<string>>;
 
-  // Auto-Build source update event listeners
+  // Auto Claude source update event listeners
   onAutoBuildSourceUpdateProgress: (
     callback: (progress: AutoBuildSourceUpdateProgress) => void
   ) => () => void;

@@ -275,7 +275,7 @@ export function Sidebar({
       <div className="flex h-full w-64 flex-col bg-sidebar border-r border-border">
         {/* Header with drag area - extra top padding for macOS traffic lights */}
         <div className="electron-drag flex h-14 items-center justify-between px-4 pt-6">
-          <span className="electron-no-drag text-lg font-bold text-primary">Auto-Build</span>
+          <span className="electron-no-drag text-lg font-bold text-primary">Auto Claude</span>
           <div className="electron-no-drag flex items-center gap-1">
             <Tooltip>
               <TooltipTrigger asChild>
@@ -401,22 +401,22 @@ export function Sidebar({
           </Button>
           {selectedProject && !selectedProject.autoBuildPath && (
             <p className="mt-2 text-xs text-muted-foreground text-center">
-              Initialize Auto-Build to create tasks
+              Initialize Auto Claude to create tasks
             </p>
           )}
         </div>
       </div>
 
-      {/* Initialize Auto-Build Dialog */}
+      {/* Initialize Auto Claude Dialog */}
       <Dialog open={showInitDialog} onOpenChange={setShowInitDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Download className="h-5 w-5" />
-              Initialize Auto-Build
+              Initialize Auto Claude
             </DialogTitle>
             <DialogDescription>
-              This project doesn't have Auto-Build initialized. Would you like to set it up now?
+              This project doesn't have Auto Claude initialized. Would you like to set it up now?
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
@@ -424,7 +424,7 @@ export function Sidebar({
               <p className="font-medium mb-2">This will:</p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground">
                 <li>Create a <code className="text-xs bg-background px-1 py-0.5 rounded">.auto-claude</code> folder in your project</li>
-                <li>Copy the Auto-Build framework files</li>
+                <li>Copy the Auto Claude framework files</li>
                 <li>Set up the specs directory for your tasks</li>
               </ul>
             </div>
@@ -435,7 +435,7 @@ export function Sidebar({
                   <div>
                     <p className="font-medium text-warning">Source path not configured</p>
                     <p className="text-muted-foreground mt-1">
-                      Please set the Auto-Build source path in App Settings before initializing.
+                      Please set the Auto Claude source path in App Settings before initializing.
                     </p>
                   </div>
                 </div>
@@ -466,7 +466,7 @@ export function Sidebar({
         </DialogContent>
       </Dialog>
 
-      {/* Update Auto-Build Dialog */}
+      {/* Update Auto Claude Dialog */}
       <Dialog open={showUpdateDialog} onOpenChange={setShowUpdateDialog}>
         <DialogContent>
           <DialogHeader>
@@ -475,7 +475,7 @@ export function Sidebar({
               Update Available
             </DialogTitle>
             <DialogDescription>
-              A newer version of Auto-Build is available for this project.
+              A newer version of Auto Claude is available for this project.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">

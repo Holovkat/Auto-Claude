@@ -1,5 +1,5 @@
 /**
- * Auto-Build Source Updater
+ * Auto Claude Source Updater
  *
  * Checks GitHub for updates to the auto-claude framework and downloads them.
  * This allows users to get new auto-claude features without requiring a full app update.
@@ -116,7 +116,7 @@ function fetchUrl(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const request = https.get(url, {
       headers: {
-        'User-Agent': 'Auto-Build-UI',
+        'User-Agent': 'Auto-Claude-UI',
         'Accept': 'application/vnd.github.v3.raw'
       }
     }, (response) => {
@@ -220,7 +220,7 @@ function downloadFile(
 
     const request = https.get(url, {
       headers: {
-        'User-Agent': 'Auto-Build-UI',
+        'User-Agent': 'Auto-Claude-UI',
         'Accept': 'application/octet-stream'
       }
     }, (response) => {

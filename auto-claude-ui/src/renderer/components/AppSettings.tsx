@@ -54,7 +54,7 @@ export function AppSettingsDialog({ open, onOpenChange }: AppSettingsDialogProps
   const [error, setError] = useState<string | null>(null);
   const [version, setVersion] = useState<string>('');
 
-  // Auto-Build source update state
+  // Auto Claude source update state
   const [sourceUpdateCheck, setSourceUpdateCheck] = useState<AutoBuildSourceUpdateCheck | null>(null);
   const [isCheckingSourceUpdate, setIsCheckingSourceUpdate] = useState(false);
   const [isDownloadingUpdate, setIsDownloadingUpdate] = useState(false);
@@ -281,7 +281,7 @@ export function AppSettingsDialog({ open, onOpenChange }: AppSettingsDialogProps
                 </p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="autoBuildPath" className="text-sm font-medium text-foreground">Auto-Build Path</Label>
+                <Label htmlFor="autoBuildPath" className="text-sm font-medium text-foreground">Auto Claude Path</Label>
                 <Input
                   id="autoBuildPath"
                   placeholder="auto-claude (default)"
@@ -298,9 +298,9 @@ export function AppSettingsDialog({ open, onOpenChange }: AppSettingsDialogProps
 
             <Separator />
 
-            {/* Auto-Build Framework Updates */}
+            {/* Auto Claude Framework Updates */}
             <section className="space-y-4">
-              <h3 className="text-sm font-semibold text-foreground">Auto-Build Framework</h3>
+              <h3 className="text-sm font-semibold text-foreground">Auto Claude Framework</h3>
               <div className="rounded-lg border border-border bg-muted/50 p-4 space-y-3">
                 {isCheckingSourceUpdate ? (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -333,7 +333,7 @@ export function AppSettingsDialog({ open, onOpenChange }: AppSettingsDialogProps
 
                     {!sourceUpdateCheck.updateAvailable && !sourceUpdateCheck.error && (
                       <p className="text-xs text-muted-foreground">
-                        You're running the latest version of the Auto-Build framework.
+                        You're running the latest version of the Auto Claude framework.
                       </p>
                     )}
 
@@ -399,7 +399,7 @@ export function AppSettingsDialog({ open, onOpenChange }: AppSettingsDialogProps
                 </div>
 
                 <p className="text-xs text-muted-foreground">
-                  Updates the bundled Auto-Build framework from GitHub. Individual projects can then be updated from Project Settings.
+                  Updates the bundled Auto Claude framework from GitHub. Individual projects can then be updated from Project Settings.
                 </p>
               </div>
 
@@ -407,7 +407,7 @@ export function AppSettingsDialog({ open, onOpenChange }: AppSettingsDialogProps
                 <div className="space-y-0.5">
                   <Label className="font-normal text-foreground">Auto-Update Projects</Label>
                   <p className="text-xs text-muted-foreground">
-                    Automatically update Auto-Build in projects when a new version is available
+                    Automatically update Auto Claude in projects when a new version is available
                   </p>
                 </div>
                 <Switch

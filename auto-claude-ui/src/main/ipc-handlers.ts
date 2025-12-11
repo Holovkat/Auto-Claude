@@ -150,15 +150,15 @@ export function setupIpcHandlers(
       path.resolve(__dirname, '..', '..', 'auto-claude')
     ];
 
-    console.log('[Auto-Build] Detecting source path, checking:', possiblePaths);
+    console.log('[Auto-Claude] Detecting source path, checking:', possiblePaths);
 
     for (const p of possiblePaths) {
       if (existsSync(p) && existsSync(path.join(p, 'VERSION'))) {
-        console.log('[Auto-Build] Found source at:', p);
+        console.log('[Auto-Claude] Found source at:', p);
         return p;
       }
     }
-    console.log('[Auto-Build] No source path found');
+    console.log('[Auto-Claude] No source path found');
     return null;
   };
 
@@ -1422,8 +1422,8 @@ ${(feature.acceptance_criteria || []).map((c: string) => `- [ ] ${c}`).join('\n'
     }
 
     // Generate content with sections
-    let content = `# Auto-Build Framework Environment Variables
-# Managed by Auto-Build UI
+    let content = `# Auto Claude Framework Environment Variables
+# Managed by Auto Claude UI
 
 # Claude Code OAuth Token (REQUIRED)
 CLAUDE_CODE_OAUTH_TOKEN=${existingVars['CLAUDE_CODE_OAUTH_TOKEN'] || ''}
@@ -2220,7 +2220,7 @@ ${issue.description || 'No description provided.'}
       headers: {
         'Accept': 'application/vnd.github.v3+json',
         'Authorization': `Bearer ${token}`,
-        'User-Agent': 'Auto-Build-UI',
+        'User-Agent': 'Auto-Claude-UI',
         ...options.headers
       }
     });
@@ -2707,7 +2707,7 @@ ${issue.body || 'No description provided.'}
   );
 
   // ============================================
-  // Auto-Build Source Update Operations
+  // Auto Claude Source Update Operations
   // ============================================
 
   ipcMain.handle(

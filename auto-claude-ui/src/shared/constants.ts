@@ -1,5 +1,5 @@
 /**
- * Shared constants for Auto-Build UI
+ * Shared constants for Auto Claude UI
  */
 
 // Task status columns in Kanban board order
@@ -171,7 +171,7 @@ export const IPC_CHANNELS = {
   GITHUB_INVESTIGATION_COMPLETE: 'github:investigationComplete',
   GITHUB_INVESTIGATION_ERROR: 'github:investigationError',
 
-  // Auto-Build source updates
+  // Auto Claude source updates
   AUTOBUILD_SOURCE_CHECK: 'autobuild:source:check',
   AUTOBUILD_SOURCE_DOWNLOAD: 'autobuild:source:download',
   AUTOBUILD_SOURCE_VERSION: 'autobuild:source:version',
