@@ -223,7 +223,7 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
     <TooltipProvider delayDuration={300}>
       <Card
         className={cn(
-          'card-surface task-card-glow cursor-pointer group',
+          'card-surface task-card-glow cursor-pointer group overflow-hidden',
           isRunning && !isStuck && 'ring-2 ring-primary/50 border-primary',
           isStuck && 'ring-2 ring-warning/50 border-warning',
           needsReview && 'ring-2 ring-purple-500/50 border-purple-500/50',
@@ -231,13 +231,13 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
         )}
         onClick={onClick}
       >
-        <CardContent className="p-4">
+        <CardContent className="p-4 overflow-hidden">
           {/* Header with title and status */}
           <div className="flex items-start justify-between gap-3">
             {/* Title with tooltip for truncation */}
             <Tooltip>
               <TooltipTrigger asChild>
-                <h3 className="font-medium text-sm text-foreground line-clamp-2 flex-1 leading-snug">
+                <h3 className="font-medium text-sm text-foreground line-clamp-2 flex-1 leading-snug break-words overflow-hidden">
                   {task.title}
                 </h3>
               </TooltipTrigger>
@@ -286,7 +286,7 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
           {task.description && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <p className="mt-2 text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                <p className="mt-2 text-xs text-muted-foreground line-clamp-2 leading-relaxed break-words overflow-hidden">
                   {task.description}
                 </p>
               </TooltipTrigger>
