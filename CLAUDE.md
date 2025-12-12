@@ -102,8 +102,10 @@ python auto-claude/validate_spec.py --spec-dir auto-claude/specs/001-feature --c
 - **security.py** + **project_analyzer.py** - Dynamic command allowlisting based on detected project stack
 - **worktree.py** - Git worktree isolation for safe parallel builds
 - **coordinator.py** - Parallel execution coordinator
-- **memory.py** - File-based session memory
-- **graphiti_memory.py** - Optional graph-based cross-session memory (requires FalkorDB)
+- **memory.py** - File-based session memory (primary, always-available storage)
+- **graphiti_memory.py** - Optional graph-based cross-session memory with semantic search
+- **graphiti_providers.py** - Multi-provider factory for Graphiti (OpenAI, Anthropic, Azure, Ollama)
+- **graphiti_config.py** - Configuration and validation for Graphiti integration
 - **linear_updater.py** - Optional Linear integration for progress tracking
 
 ### Agent Prompts (auto-claude/prompts/)
@@ -139,6 +141,24 @@ Three-layer defense:
 3. **Command Allowlist** - Dynamic allowlist from project analysis (security.py + project_analyzer.py)
 
 Security profile cached in `.auto-claude-security.json`.
+
+### Memory System
+
+Dual-layer memory architecture:
+
+**File-Based Memory (Primary)** - `memory.py`
+- Zero dependencies, always available
+- Human-readable files in `specs/XXX/memory/`
+- Session insights, patterns, gotchas, codebase map
+
+**Graphiti Memory (Optional Enhancement)** - `graphiti_memory.py`
+- Graph database with semantic search (FalkorDB)
+- Cross-session context retrieval
+- Multi-provider support (V2):
+  - LLM: OpenAI, Anthropic, Azure OpenAI, Ollama
+  - Embedders: OpenAI, Voyage AI, Azure OpenAI, Ollama
+
+Enable with: `GRAPHITI_ENABLED=true` + provider credentials. See `.env.example`.
 
 ## Development Mode
 

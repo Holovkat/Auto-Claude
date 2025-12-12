@@ -310,7 +310,7 @@ your-project/
 - **Multiple Specs**: Track and run multiple specifications independently
 - **Graphiti Memory** (Optional): Persistent knowledge graph for cross-session context retention
 
-## Graphiti Memory Integration (Optional)
+## Graphiti Memory Integration V2 (Optional)
 
 Auto Claude includes an optional **Graphiti-based persistent memory layer** that enables context retention across coding sessions. This uses FalkorDB as a graph database to store codebase patterns, session insights, and cross-session learnings.
 
@@ -319,6 +319,24 @@ Auto Claude includes an optional **Graphiti-based persistent memory layer** that
 - **Cross-session context**: Agents remember insights from previous sessions
 - **Pattern recognition**: Discovered codebase patterns persist and are reusable
 - **Smarter agents**: Context retrieval helps agents make better decisions
+- **Historical hints**: Spec creation, ideation, and roadmap phases receive relevant historical insights
+
+### Multi-Provider Support (V2)
+
+Graphiti Memory V2 supports multiple LLM and embedding providers:
+
+| LLM Providers | Embedding Providers |
+|---------------|---------------------|
+| OpenAI (default) | OpenAI (default) |
+| Anthropic | Voyage AI |
+| Azure OpenAI | Azure OpenAI |
+| Ollama (local) | Ollama (local) |
+
+**Provider Combinations:**
+- **OpenAI + OpenAI**: Simplest setup, single API key
+- **Anthropic + Voyage**: High-quality LLM with specialized embeddings
+- **Ollama + Ollama**: Fully offline, no API keys needed
+- **Azure OpenAI + Azure OpenAI**: Enterprise deployments
 
 ### Setup
 
@@ -337,14 +355,31 @@ docker-compose up -d falkordb
 
 **Step 3:** Configure environment variables
 
-Add to your `.env` file:
+Add to your `.env` file (see `.env.example` for full documentation):
 
 ```bash
 # Enable Graphiti integration
 GRAPHITI_ENABLED=true
 
-# Required for Graphiti embeddings
+# Provider selection (defaults to openai)
+GRAPHITI_LLM_PROVIDER=openai
+GRAPHITI_EMBEDDER_PROVIDER=openai
+
+# Example 1: OpenAI (simplest)
 OPENAI_API_KEY=sk-your-openai-key-here
+
+# Example 2: Anthropic + Voyage (high quality)
+# GRAPHITI_LLM_PROVIDER=anthropic
+# GRAPHITI_EMBEDDER_PROVIDER=voyage
+# ANTHROPIC_API_KEY=sk-ant-xxx
+# VOYAGE_API_KEY=pa-xxx
+
+# Example 3: Ollama (fully offline)
+# GRAPHITI_LLM_PROVIDER=ollama
+# GRAPHITI_EMBEDDER_PROVIDER=ollama
+# OLLAMA_LLM_MODEL=deepseek-r1:7b
+# OLLAMA_EMBEDDING_MODEL=nomic-embed-text
+# OLLAMA_EMBEDDING_DIM=768
 ```
 
 **Step 4:** Verify it's working
@@ -352,6 +387,9 @@ OPENAI_API_KEY=sk-your-openai-key-here
 ```bash
 python auto-claude/run.py --list
 # Should show: "Graphiti memory: ENABLED"
+
+# Test the full integration
+python auto-claude/test_graphiti_memory.py
 ```
 
 ### When Disabled
@@ -365,7 +403,13 @@ When `GRAPHITI_ENABLED` is not set (default), Auto Claude uses file-based memory
 | `CLAUDE_CODE_OAUTH_TOKEN` | Yes | OAuth token from `claude setup-token` |
 | `AUTO_BUILD_MODEL` | No | Model override (default: claude-opus-4-5-20251101) |
 | `GRAPHITI_ENABLED` | No | Set to `true` to enable Graphiti memory |
-| `OPENAI_API_KEY` | For Graphiti | Required when Graphiti is enabled |
+| `GRAPHITI_LLM_PROVIDER` | No | LLM provider: openai, anthropic, azure_openai, ollama |
+| `GRAPHITI_EMBEDDER_PROVIDER` | No | Embedder: openai, voyage, azure_openai, ollama |
+| `OPENAI_API_KEY` | For OpenAI | Required for OpenAI provider |
+| `ANTHROPIC_API_KEY` | For Anthropic | Required for Anthropic LLM |
+| `VOYAGE_API_KEY` | For Voyage | Required for Voyage embeddings |
+
+See `auto-claude/.env.example` for complete provider configuration options.
 
 ## Documentation
 
