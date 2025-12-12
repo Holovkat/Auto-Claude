@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import type { Project, ProjectSettings, AutoBuildVersionInfo, InitializationResult } from '../../shared/types';
 
+// localStorage key for persisting the last selected project
+const LAST_SELECTED_PROJECT_KEY = 'lastSelectedProjectId';
+
 interface ProjectState {
   projects: Project[];
   selectedProjectId: string | null;
@@ -47,7 +50,15 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       )
     })),
 
-  selectProject: (projectId) => set({ selectedProjectId: projectId }),
+  selectProject: (projectId) => {
+    // Persist to localStorage for restoration on app reload
+    if (projectId) {
+      localStorage.setItem(LAST_SELECTED_PROJECT_KEY, projectId);
+    } else {
+      localStorage.removeItem(LAST_SELECTED_PROJECT_KEY);
+    }
+    set({ selectedProjectId: projectId });
+  },
 
   setLoading: (isLoading) => set({ isLoading }),
 
@@ -71,9 +82,17 @@ export async function loadProjects(): Promise<void> {
     const result = await window.electronAPI.getProjects();
     if (result.success && result.data) {
       store.setProjects(result.data);
-      // Select first project if none selected
+
+      // Restore last selected project from localStorage, or fall back to first project
       if (!store.selectedProjectId && result.data.length > 0) {
-        store.selectProject(result.data[0].id);
+        const lastSelectedId = localStorage.getItem(LAST_SELECTED_PROJECT_KEY);
+        const projectExists = lastSelectedId && result.data.some((p) => p.id === lastSelectedId);
+
+        if (projectExists) {
+          store.selectProject(lastSelectedId);
+        } else {
+          store.selectProject(result.data[0].id);
+        }
       }
     } else {
       store.setError(result.error || 'Failed to load projects');
