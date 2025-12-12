@@ -67,6 +67,8 @@ dmypy.json
 
 # Auto-build generated files
 .auto-build-security.json
+.auto-claude-security.json
+.auto-claude-status
 .claude_settings.json
 
 # Development of Auto Build with Auto Build
