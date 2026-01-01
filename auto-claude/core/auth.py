@@ -7,12 +7,15 @@ for custom API endpoints.
 """
 
 import os
+from typing import Optional
 
 # Priority order for auth token resolution
 AUTH_TOKEN_ENV_VARS = [
     "CLAUDE_CODE_OAUTH_TOKEN",  # Original (highest priority)
     "GEMINI_API_KEY",  # Google Gemini API key
     "GOOGLE_API_KEY",  # Alternative Google API key
+    "ZAI_API_KEY",     # Z.ai GLM API key
+    "OPENAI_API_KEY",  # Generic OpenAI/Ollama API key
     "ANTHROPIC_AUTH_TOKEN",  # CCR/proxy token
     "ANTHROPIC_API_KEY",  # Direct API key (lowest priority)
 ]
@@ -24,6 +27,8 @@ SDK_ENV_VARS = [
     "ANTHROPIC_API_KEY",
     "GEMINI_API_KEY",
     "GOOGLE_API_KEY",
+    "ZAI_API_KEY",
+    "OPENAI_API_KEY",
     "NO_PROXY",
     "DISABLE_TELEMETRY",
     "DISABLE_COST_WARNINGS",
@@ -31,7 +36,7 @@ SDK_ENV_VARS = [
 ]
 
 
-def get_auth_token() -> str | None:
+def get_auth_token() -> Optional[str]:
     """
     Get authentication token from environment variables.
 
@@ -50,7 +55,7 @@ def get_auth_token() -> str | None:
     return None
 
 
-def get_auth_token_source() -> str | None:
+def get_auth_token_source() -> Optional[str]:
     """Get the name of the env var that provided the auth token."""
     for var in AUTH_TOKEN_ENV_VARS:
         if os.environ.get(var):
