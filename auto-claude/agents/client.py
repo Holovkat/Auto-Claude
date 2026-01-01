@@ -14,7 +14,7 @@ from auto_claude_tools import (
     get_allowed_tools,
     is_tools_available,
 )
-from .engine import AgentOptions, BaseAgentEngine, ClaudeAgentEngine, GeminiAgentEngine
+from .engine import AgentOptions, BaseAgentEngine, ClaudeAgentEngine, GeminiAgentEngine, OpenAIAgentEngine
 from .auth import get_sdk_env_vars, require_auth_token
 from linear_updater import is_linear_enabled
 from security import bash_security_hook
@@ -322,7 +322,10 @@ def create_client(
         verbose=verbose,
     )
 
-    if model.startswith("gemini"):
+    model_lower = model.lower()
+    if model_lower.startswith("gemini"):
         return GeminiAgentEngine(options)
+    elif model_lower.startswith("glm") or model_lower.startswith("ollama") or model_lower.startswith("openai") or model_lower.startswith("z-"):
+        return OpenAIAgentEngine(options)
     else:
         return ClaudeAgentEngine(options)

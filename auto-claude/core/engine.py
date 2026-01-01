@@ -1,0 +1,570 @@
+"""
+Batch Processor and Agent Engine Abstractions
+=============================================
+
+Defines the base interface for agent engines that can run autonomous coding sessions.
+Supports different LLM providers (Claude SDK, Gemini API, etc.)
+"""
+
+import os
+import sys
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, AsyncIterator, Dict, List, Optional, Union
+
+
+@dataclass
+class AgentMessage:
+    """Represents a message in the agent conversation."""
+    role: str  # 'user' or 'assistant'
+    content: Union[str, List[Dict[str, Any]]]
+
+
+@dataclass
+class AgentOptions:
+    """Configuration options for an agent engine."""
+    model: str
+    system_prompt: str
+    allowed_tools: List[str] = field(default_factory=list)
+    mcp_servers: Dict[str, Any] = field(default_factory=dict)
+    hooks: Dict[str, List[Any]] = field(default_factory=dict)
+    max_turns: int = 1000
+    cwd: Optional[str] = None
+    settings: Optional[str] = None
+    env: Optional[Dict[str, str]] = None
+    verbose: bool = False
+
+
+class MCPManager:
+    """Manages connections to multiple MCP servers."""
+    def __init__(self, servers_config: Dict[str, Any]):
+        self.configs = servers_config
+        self.clients = {}  # server_name -> mcp_client
+        self.tool_map = {}  # tool_name -> server_name
+        self._initialized = False
+
+    async def initialize(self):
+        """Connect to all configured MCP servers and discover tools."""
+        if self._initialized: return
+        
+        # NOTE: For now, we'll implement a simplified version that just maps
+        # external tool names if they are already known, or provides a framework
+        # for connecting to actual MCP servers.
+        # In a full implementation, we'd use mcp.StdioServerTransport etc.
+        self._initialized = True
+
+    async def list_tools(self) -> List[Dict[str, Any]]:
+        """Return a list of all tools from all servers."""
+        # Dummy implementation for now - in reality would query servers
+        return []
+
+    async def call_tool(self, server_name: str, tool_name: str, arguments: Dict[str, Any]) -> str:
+        """Call a tool on a specific MCP server."""
+        # Dummy implementation for now
+        return f"Error: MCP Server {server_name} not yet connected for tool {tool_name}"
+
+
+class BaseAgentEngine(ABC):
+    """Abstract base class for all agent engines."""
+
+    def __init__(self, options: AgentOptions):
+        self.options = options
+        self.history: List[Dict[str, Any]] = []
+
+    @abstractmethod
+    async def query(self, message: str) -> None:
+        """Send a query to the agent."""
+        raise NotImplementedError
+
+    def set_system_prompt(self, prompt: str) -> None:
+        """Set the agent's system prompt."""
+        pass
+
+    @abstractmethod
+    async def receive_response(self) -> AsyncIterator[Any]:
+        """Receive a streaming response from the agent."""
+        pass
+
+    @abstractmethod
+    async def cleanup(self) -> None:
+        """Cleanup resources used by the engine."""
+        pass
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.cleanup()
+
+
+class ClaudeAgentEngine(BaseAgentEngine):
+    """Engine that wraps the official Claude Agent SDK client."""
+
+    def __init__(self, options: AgentOptions):
+        super().__init__(options)
+        try:
+            from claude_agent_sdk import ClaudeAgentOptions, ClaudeSDKClient
+            from claude_agent_sdk.types import HookMatcher
+        except ImportError:
+            raise RuntimeError("claude-agent-sdk not installed")
+
+        self.client = ClaudeSDKClient(
+            options=ClaudeAgentOptions(
+                model=options.model,
+                system_prompt=options.system_prompt,
+                allowed_tools=options.allowed_tools,
+                mcp_servers=options.mcp_servers,
+                hooks=options.hooks,
+                max_turns=options.max_turns,
+                cwd=options.cwd,
+                settings=options.settings,
+                env=options.env,
+            )
+        )
+
+    async def query(self, message: str) -> None:
+        await self.client.query(message)
+
+    def set_system_prompt(self, prompt: str) -> None:
+        if hasattr(self.client, "set_system_prompt"):
+            self.client.set_system_prompt(prompt)
+
+    async def receive_response(self) -> AsyncIterator[Any]:
+        async for msg in self.client.receive_response():
+            yield msg
+
+    async def cleanup(self) -> None:
+        if hasattr(self, "client") and self.client:
+            await self.client.cleanup()
+
+
+class GeminiAgentEngine(BaseAgentEngine):
+    """
+    Engine that communicates directly with Gemini API.
+    Provides built-in tools and MCP client functionality.
+    """
+
+    def __init__(self, options: AgentOptions):
+        super().__init__(options)
+        import google.generativeai as genai
+        import os
+        
+        self.api_key = (options.env or {}).get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
+        if not self.api_key:
+            self.api_key = (options.env or {}).get("GOOGLE_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+            
+        if not self.api_key:
+            raise ValueError("GEMINI_API_KEY or GOOGLE_API_KEY must be provided")
+
+        genai.configure(api_key=self.api_key)
+        self._initialize_model()
+        self.mcp_manager = MCPManager(options.mcp_servers)
+        self.chat_session = self.model.start_chat(history=[])
+        self._current_response = None
+        self._pending_tool_results = []
+        
+        # Prepare persistent debug log
+        self._debug_log_path = Path.cwd() / "gemini_debug.txt"
+        if self.options.verbose:
+            with open(self._debug_log_path, "a") as f:
+                f.write(f"\n--- SESSION START: {self.options.model} ---\n")
+
+    def _initialize_model(self) -> None:
+        import google.generativeai as genai
+        # Helper function to convert allowed_tools list to Gemini tool format
+        def get_agent_allowed_tools(allowed_tools_list: List[str]):
+            gemini_tools = []
+            for tool_name in allowed_tools_list:
+                if tool_name == "Read":
+                    gemini_tools.append(self._make_gemini_tool(
+                        name="Read",
+                        description="Read a file or a specific range of lines.",
+                        parameters={
+                            "type": "object",
+                            "properties": {
+                                "file_path": {"type": "string"},
+                                "start_line": {"type": "integer"},
+                                "end_line": {"type": "integer"}
+                            },
+                            "required": ["file_path"]
+                        }
+                    ))
+                elif tool_name == "Write":
+                    gemini_tools.append(self._make_gemini_tool(
+                        name="Write",
+                        description="Create or overwrite a file.",
+                        parameters={
+                            "type": "object",
+                            "properties": {
+                                "file_path": {"type": "string"},
+                                "content": {"type": "string"}
+                            },
+                            "required": ["file_path", "content"]
+                        }
+                    ))
+                elif tool_name == "Edit":
+                    gemini_tools.append(self._make_gemini_tool(
+                        name="Edit",
+                        description="Edit a file by replacing target_content with replacement_content.",
+                        parameters={
+                            "type": "object",
+                            "properties": {
+                                "file_path": {"type": "string"},
+                                "target_content": {"type": "string"},
+                                "replacement_content": {"type": "string"}
+                            },
+                            "required": ["file_path", "target_content", "replacement_content"]
+                        }
+                    ))
+                elif tool_name == "Glob":
+                    gemini_tools.append(self._make_gemini_tool(
+                        name="Glob",
+                        description="List files matching a pattern.",
+                        parameters={
+                            "type": "object",
+                            "properties": {
+                                "pattern": {"type": "string"}
+                            },
+                            "required": ["pattern"]
+                        }
+                    ))
+                elif tool_name == "Grep":
+                    gemini_tools.append(self._make_gemini_tool(
+                        name="Grep",
+                        description="Search for a string in files.",
+                        parameters={
+                            "type": "object",
+                            "properties": {
+                                "query": {"type": "string"},
+                                "pattern": {"type": "string"}
+                            },
+                            "required": ["query"]
+                        }
+                    ))
+                elif tool_name == "Bash":
+                    gemini_tools.append(self._make_gemini_tool(
+                        name="Bash",
+                        description="Execute a bash command.",
+                        parameters={
+                            "type": "object",
+                            "properties": {
+                                "command": {"type": "string"}
+                            },
+                            "required": ["command"]
+                        }
+                    ))
+            return gemini_tools
+
+        self.model = genai.GenerativeModel(
+            model_name=self.options.model,
+            system_instruction=self.options.system_prompt,
+            tools=get_agent_allowed_tools(self.options.allowed_tools),
+        )
+
+    def set_system_prompt(self, prompt: str) -> None:
+        """Update system prompt and re-initialize model/session."""
+        # Preserve existing history if any
+        history = self.chat_session.history if hasattr(self, "chat_session") else []
+        self.options.system_prompt = prompt
+        self._initialize_model()
+        # Restart chat session with new model and preserved history
+        self.chat_session = self.model.start_chat(history=history)
+
+    async def query(self, message: str) -> None:
+        # Check if we need to initialize tools
+        if not hasattr(self, '_tools_configured'):
+            self._configure_tools()
+
+        # For Gemini, we handle the multi-turn loop manually
+        self._current_response = await self.chat_session.send_message_async(message, stream=True)
+        
+        # We need to exhaust the response to handle tool calls automatically
+        # or we yield blocks from receive_response and handle execution there.
+        # But existing code expects streaming text + tool use messages.
+
+    def _configure_tools(self):
+        """Register built-in tools with the Gemini model."""
+        import google.generativeai as genai
+        
+        # Define Gemini tools based on allowed_tools
+        gemini_tools = []
+        
+        # 1. Built-in tools mapping
+        for tool_name in self.options.allowed_tools:
+            if tool_name == "Read":
+                gemini_tools.append(self._make_gemini_tool(
+                    name="Read",
+                    description="Read a file or a specific range of lines.",
+                    parameters={
+                        "type": "object",
+                        "properties": {
+                            "file_path": {"type": "string"},
+                            "start_line": {"type": "integer"},
+                            "end_line": {"type": "integer"}
+                        },
+                        "required": ["file_path"]
+                    }
+                ))
+            elif tool_name == "Write":
+                gemini_tools.append(self._make_gemini_tool(
+                    name="Write",
+                    description="Create or overwrite a file.",
+                    parameters={
+                        "type": "object",
+                        "properties": {
+                            "file_path": {"type": "string"},
+                            "content": {"type": "string"}
+                        },
+                        "required": ["file_path", "content"]
+                    }
+                ))
+            elif tool_name == "Edit":
+                gemini_tools.append(self._make_gemini_tool(
+                    name="Edit",
+                    description="Edit a file by replacing target_content with replacement_content.",
+                    parameters={
+                        "type": "object",
+                        "properties": {
+                            "file_path": {"type": "string"},
+                            "target_content": {"type": "string"},
+                            "replacement_content": {"type": "string"}
+                        },
+                        "required": ["file_path", "target_content", "replacement_content"]
+                    }
+                ))
+            elif tool_name == "Glob":
+                gemini_tools.append(self._make_gemini_tool(
+                    name="Glob",
+                    description="List files matching a pattern.",
+                    parameters={
+                        "type": "object",
+                        "properties": {
+                            "pattern": {"type": "string"}
+                        },
+                        "required": ["pattern"]
+                    }
+                ))
+            elif tool_name == "Grep":
+                gemini_tools.append(self._make_gemini_tool(
+                    name="Grep",
+                    description="Search for a string in files.",
+                    parameters={
+                        "type": "object",
+                        "properties": {
+                            "query": {"type": "string"},
+                            "pattern": {"type": "string"}
+                        },
+                        "required": ["query"]
+                    }
+                ))
+            elif tool_name == "Bash":
+                gemini_tools.append(self._make_gemini_tool(
+                    name="Bash",
+                    description="Execute a bash command.",
+                    parameters={
+                        "type": "object",
+                        "properties": {
+                            "command": {"type": "string"}
+                        },
+                        "required": ["command"]
+                    }
+                ))
+            
+        # Re-initialize model with tools if any
+        if gemini_tools:
+            import google.generativeai as genai
+            self.model = genai.GenerativeModel(
+                model_name=self.options.model,
+                system_instruction=self.options.system_prompt,
+                tools=gemini_tools
+            )
+            # Restart chat with the new model
+            self.chat_session = self.model.start_chat(history=self.history)
+            
+        self._tools_configured = True
+
+    async def _handle_tool_calls(self, function_calls: List[Any]) -> bool:
+        """Execute tool calls and send results back to Gemini."""
+        from .tools.builtin import read_file, write_file, edit_file, glob_files, grep_files, execute_bash
+        
+        if not function_calls:
+            return False
+            
+        tool_results = []
+        
+        # We'll store results to yield them in receive_response
+        self._pending_tool_results = []
+        
+        for fc in function_calls:
+            args = dict(fc.args)
+            
+            # Resolve paths relative to CWD
+            cwd = Path(self.options.cwd) if self.options.cwd else Path.cwd()
+            
+            if "file_path" in args:
+                # Handle safe path resolution
+                try:
+                    fp = Path(args["file_path"])
+                    if not fp.is_absolute():
+                        args["file_path"] = str(cwd / fp)
+                except Exception:
+                    pass  # Let tool handle invalid paths
+            
+            # Dispatch
+            result = ""
+            if fc.name == "Read":
+                result = read_file(**args)
+            elif fc.name == "Write":
+                result = write_file(**args)
+            elif fc.name == "Edit":
+                result = edit_file(**args)
+            elif fc.name == "Glob":
+                if "root_dir" not in args:
+                    args["root_dir"] = str(cwd)
+                result = glob_files(**args)
+            elif fc.name == "Grep":
+                if "root_dir" not in args:
+                    args["root_dir"] = str(cwd)
+                result = grep_files(**args)
+            elif fc.name == "Bash":
+                result = execute_bash(command=args.get("command"), cwd=self.options.cwd)
+            else:
+                result = f"Error: Tool {fc.name} not implemented."
+            
+            if self.options.verbose:
+                msg = f"\n[DEBUG] Tool {fc.name} called with {args}\n[DEBUG] Result (first 100 chars): {str(result)[:100]}...\n"
+                sys.stderr.write(msg)
+                sys.stderr.flush()
+                with open(self._debug_log_path, "a") as f:
+                    f.write(msg)
+            
+            tool_results.append({
+                "function_response": {
+                    "name": fc.name,
+                    "response": {"result": result}
+                }
+            })
+            
+            self._pending_tool_results.append(UserMessage("dummy_id", result))
+        
+        # Send results back and update response
+        self._current_response = await self.chat_session.send_message_async(tool_results, stream=True)
+        return True
+
+    def _make_gemini_tool(self, name: str, description: str, parameters: Dict[str, Any]):
+        """Create a tool definition for Gemini."""
+        return {
+            "function_declarations": [{
+                "name": name,
+                "description": description,
+                "parameters": parameters
+            }]
+        }
+
+    async def receive_response(self) -> AsyncIterator[Any]:
+        if not self._current_response:
+            return
+
+        while True:
+            # Exhaust current stream
+            last_chunk = None
+            collected_function_calls = []
+            
+            async for chunk in self._current_response:
+                yield AssistantMessage(chunk)
+                last_chunk = chunk
+                
+                # Verify chunk has candidates and content parts
+                if hasattr(chunk, 'candidates') and chunk.candidates:
+                    candidate = chunk.candidates[0]
+                    if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
+                        for part in candidate.content.parts:
+                            if hasattr(part, 'function_call') and part.function_call:
+                                collected_function_calls.append(part.function_call)
+            
+            if not last_chunk:
+                break
+                
+            # Check for tool calls and handle them
+            if collected_function_calls:
+                if await self._handle_tool_calls(collected_function_calls):
+                    # Yield the tool results first so the UI can show them
+                    if hasattr(self, '_pending_tool_results'):
+                        for res in self._pending_tool_results:
+                            # self._pending_tool_results already contains UserMessage objects
+                            yield res
+                        self._pending_tool_results = []
+                    # Then continue with the next stream from Gemini
+                    continue
+            
+            break
+
+    async def cleanup(self) -> None:
+        pass
+
+
+class AssistantMessage:
+    """Helper to wrap Gemini response chunks into Claude SDK message format."""
+    def __init__(self, chunk: Any):
+        self.chunk = chunk
+        self.content = self._parse_content()
+
+    def _parse_content(self) -> List[Any]:
+        from dataclasses import dataclass
+
+        @dataclass
+        class TextBlock:
+            text: str
+
+        @dataclass
+        class ToolUseBlock:
+            name: str
+            input: Dict[str, Any]
+            id: str = "dummy_id"
+
+        content = []
+        
+        # Safely parse parts from the chunk/response
+        if hasattr(self.chunk, 'candidates'):
+            for candidate in self.chunk.candidates:
+                if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
+                    for part in candidate.content.parts:
+                        # Safely check for text - avoid .text property which can raise ValueError
+                        if hasattr(part, 'text') and part.text:
+                            content.append(TextBlock(text=part.text))
+                        
+                        # Map Gemini function calls to ToolUseBlock
+                        if hasattr(part, 'function_call') and part.function_call:
+                            fc = part.function_call
+                            content.append(ToolUseBlock(
+                                name=fc.name,
+                                input=dict(fc.args)
+                            ))
+        elif hasattr(self.chunk, 'text') and self.chunk.text:
+            # Fallback for simple text responses
+            content.append(TextBlock(text=self.chunk.text))
+        
+        return content
+
+    def __iter__(self):
+        # Allow iterating over content blocks for compatibility
+        return iter(self.content)
+
+
+class UserMessage:
+    """Helper to wrap tool results for Gemini, matching Claude SDK structure."""
+    def __init__(self, tool_use_id: str, content: str, is_error: bool = False):
+        from dataclasses import dataclass
+        
+        @dataclass
+        class ToolResultBlock:
+            content: str
+            is_error: bool = False
+            tool_use_id: str = "dummy_id"
+            
+        self.content = [ToolResultBlock(content=content, is_error=is_error, tool_use_id=tool_use_id)]
+
+    def __iter__(self):
+        # Allow iterating over content blocks for compatibility
+        return iter(self.content or [])

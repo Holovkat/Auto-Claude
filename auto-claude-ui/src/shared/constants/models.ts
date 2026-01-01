@@ -12,7 +12,11 @@ import type { AgentProfile } from '../types/settings';
 export const AVAILABLE_MODELS = [
   { value: 'opus', label: 'Claude Opus 4.5' },
   { value: 'sonnet', label: 'Claude Sonnet 4.5' },
-  { value: 'haiku', label: 'Claude Haiku 4.5' }
+  { value: 'haiku', label: 'Claude Haiku 4.5' },
+  { value: 'gemini-3-pro-preview', label: 'Gemini 3 Pro (Preview)' },
+  { value: 'gemini-3-flash-preview', label: 'Gemini 3 Flash (Preview)' },
+  { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
+  { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' }
 ] as const;
 
 // ============================================

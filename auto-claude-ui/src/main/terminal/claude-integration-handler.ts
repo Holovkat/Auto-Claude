@@ -185,12 +185,14 @@ export function invokeClaude(
       const tempFile = path.join(os.tmpdir(), `.claude-token-${Date.now()}`);
       fs.writeFileSync(tempFile, `export CLAUDE_CODE_OAUTH_TOKEN="${token}"\n`, { mode: 0o600 });
 
-      terminal.pty.write(`${cwdCommand}source "${tempFile}" && rm -f "${tempFile}" && claude\r`);
-      console.warn('[ClaudeIntegration] Switching to Claude profile:', activeProfile.name, '(via secure temp file)');
+      const cliCommand = process.env.AUTO_CLAUDE_CLI_COMMAND || 'claude';
+      terminal.pty.write(`${cwdCommand}source "${tempFile}" && rm -f "${tempFile}" && ${cliCommand}\r`);
+      console.warn('[ClaudeIntegration] Switching to profile:', activeProfile.name, '(via secure temp file)');
       return;
     } else if (activeProfile.configDir) {
-      terminal.pty.write(`${cwdCommand}CLAUDE_CONFIG_DIR="${activeProfile.configDir}" claude\r`);
-      console.warn('[ClaudeIntegration] Using Claude profile:', activeProfile.name, 'config:', activeProfile.configDir);
+      const cliCommand = process.env.AUTO_CLAUDE_CLI_COMMAND || 'claude';
+      terminal.pty.write(`${cwdCommand}CLAUDE_CONFIG_DIR="${activeProfile.configDir}" ${cliCommand}\r`);
+      console.warn('[ClaudeIntegration] Using profile:', activeProfile.name, 'config:', activeProfile.configDir);
       return;
     }
   }
@@ -199,7 +201,8 @@ export function invokeClaude(
     console.warn('[ClaudeIntegration] Using Claude profile:', activeProfile.name, '(from terminal environment)');
   }
 
-  terminal.pty.write(`${cwdCommand}claude\r`);
+  const cliCommand = process.env.AUTO_CLAUDE_CLI_COMMAND || 'claude';
+  terminal.pty.write(`${cwdCommand}${cliCommand}\r`);
 
   if (activeProfile) {
     profileManager.markProfileUsed(activeProfile.id);
@@ -232,12 +235,13 @@ export function resumeClaude(
 ): void {
   terminal.isClaudeMode = true;
 
+  const cliCommand = process.env.AUTO_CLAUDE_CLI_COMMAND || 'claude';
   let command: string;
   if (sessionId) {
-    command = `claude --resume "${sessionId}"`;
+    command = `${cliCommand} --resume "${sessionId}"`;
     terminal.claudeSessionId = sessionId;
   } else {
-    command = 'claude --continue';
+    command = `${cliCommand} --continue`;
   }
 
   terminal.pty.write(`${command}\r`);

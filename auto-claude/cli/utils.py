@@ -15,7 +15,11 @@ if str(_PARENT_DIR) not in sys.path:
     sys.path.insert(0, str(_PARENT_DIR))
 
 from core.auth import AUTH_TOKEN_ENV_VARS, get_auth_token, get_auth_token_source
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+    DOTENV_AVAILABLE = True
+except ImportError:
+    DOTENV_AVAILABLE = False
 from graphiti_config import get_graphiti_status
 from linear_integration import LinearManager
 from linear_updater import is_linear_enabled
@@ -43,13 +47,22 @@ def setup_environment() -> Path:
     script_dir = Path(__file__).parent.parent.resolve()
     sys.path.insert(0, str(script_dir))
 
-    # Load .env file - check both auto-claude/ and dev/auto-claude/ locations
+    # Load .env file - check project root, auto-claude/ and dev/ locations
+    root_env_file = script_dir.parent / ".env"
     env_file = script_dir / ".env"
     dev_env_file = script_dir.parent / "dev" / "auto-claude" / ".env"
-    if env_file.exists():
+    
+    if root_env_file.exists() and DOTENV_AVAILABLE:
+        print(f"Loading environment from {root_env_file}")
+        load_dotenv(root_env_file)
+    elif env_file.exists() and DOTENV_AVAILABLE:
+        print(f"Loading environment from {env_file}")
         load_dotenv(env_file)
-    elif dev_env_file.exists():
+    elif dev_env_file.exists() and DOTENV_AVAILABLE:
+        print(f"Loading environment from {dev_env_file}")
         load_dotenv(dev_env_file)
+    else:
+        print(f"No .env file found (checked {root_env_file}, {env_file}) or python-dotenv missing ({DOTENV_AVAILABLE})")
 
     return script_dir
 

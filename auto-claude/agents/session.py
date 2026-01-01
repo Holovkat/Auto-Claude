@@ -8,8 +8,13 @@ memory updates, recovery tracking, and Linear integration.
 
 import logging
 from pathlib import Path
+from typing import Any
 
-from claude_agent_sdk import ClaudeSDKClient
+try:
+    from claude_agent_sdk import ClaudeSDKClient
+except ImportError:
+    ClaudeSDKClient = Any
+
 from insight_extractor import extract_session_insights
 from linear_updater import (
     linear_subtask_completed,
@@ -310,7 +315,7 @@ async def post_session_processing(
 
 
 async def run_agent_session(
-    client: ClaudeSDKClient,
+    client: Any,  # BaseAgentEngine or ClaudeSDKClient
     message: str,
     spec_dir: Path,
     verbose: bool = False,

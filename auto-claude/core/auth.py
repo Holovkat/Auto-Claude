@@ -11,6 +11,8 @@ import os
 # Priority order for auth token resolution
 AUTH_TOKEN_ENV_VARS = [
     "CLAUDE_CODE_OAUTH_TOKEN",  # Original (highest priority)
+    "GEMINI_API_KEY",  # Google Gemini API key
+    "GOOGLE_API_KEY",  # Alternative Google API key
     "ANTHROPIC_AUTH_TOKEN",  # CCR/proxy token
     "ANTHROPIC_API_KEY",  # Direct API key (lowest priority)
 ]
@@ -20,6 +22,8 @@ SDK_ENV_VARS = [
     "ANTHROPIC_BASE_URL",
     "ANTHROPIC_AUTH_TOKEN",
     "ANTHROPIC_API_KEY",
+    "GEMINI_API_KEY",
+    "GOOGLE_API_KEY",
     "NO_PROXY",
     "DISABLE_TELEMETRY",
     "DISABLE_COST_WARNINGS",

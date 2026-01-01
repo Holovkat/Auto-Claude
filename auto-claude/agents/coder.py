@@ -245,7 +245,7 @@ async def run_autonomous_agent(
         commit_count_before = get_commit_count(project_dir)
 
         # Create client (fresh context)
-        client = create_client(project_dir, spec_dir, model)
+        client = create_client(project_dir, spec_dir, model, verbose=verbose, cwd=project_dir)
 
         # Generate appropriate prompt
         if first_run:

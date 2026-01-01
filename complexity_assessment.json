@@ -1,0 +1,62 @@
+{
+  "complexity": "standard",
+  "workflow_type": "feature",
+  "confidence": 0.8,
+  "reasoning": "The task involves fixing a regression or adding a regression test for the spec system. This likely involves modifying Python code in the auto-claude service (spec or test modules). A standard workflow is appropriate to ensure proper discovery of the regression and validation of the fix.",
+  "analysis": {
+    "scope": {
+      "estimated_files": 4,
+      "estimated_services": 1,
+      "is_cross_cutting": false,
+      "notes": "Likely confined to auto-claude/spec or tests/"
+    },
+    "integrations": {
+      "external_services": [],
+      "new_dependencies": [],
+      "research_needed": false,
+      "notes": "No external integrations expected for a regression fix."
+    },
+    "infrastructure": {
+      "docker_changes": false,
+      "database_changes": false,
+      "config_changes": false,
+      "notes": "Unlikely to require infra changes."
+    },
+    "knowledge": {
+      "patterns_exist": true,
+      "research_required": false,
+      "unfamiliar_tech": [],
+      "notes": "Standard Python testing and spec logic."
+    },
+    "risk": {
+      "level": "low",
+      "concerns": ["Ensuring the regression is correctly identified and reproduced"],
+      "notes": "Main risk is not reproducing the regression correctly."
+    }
+  },
+  "recommended_phases": [
+    "discovery",
+    "requirements",
+    "context",
+    "spec_writing",
+    "planning",
+    "validation"
+  ],
+  "flags": {
+    "needs_research": false,
+    "needs_self_critique": false,
+    "needs_infrastructure_setup": false
+  },
+  "validation_recommendations": {
+    "risk_level": "medium",
+    "skip_validation": false,
+    "minimal_mode": false,
+    "test_types_required": [
+      "unit",
+      "integration"
+    ],
+    "security_scan_required": false,
+    "staging_deployment_required": false,
+    "reasoning": "Regression fixes require verifying the fix works and doesn't break existing functionality. Unit tests are essential, and integration tests ensure the spec system works as a whole."
+  }
+}

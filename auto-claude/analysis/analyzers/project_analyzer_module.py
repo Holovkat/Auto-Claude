@@ -23,6 +23,7 @@ class ProjectAnalyzer:
             "services": {},
             "infrastructure": {},
             "conventions": {},
+            "files": [],
         }
 
     def analyze(self) -> dict[str, Any]:
@@ -32,6 +33,7 @@ class ProjectAnalyzer:
         self._analyze_infrastructure()
         self._detect_conventions()
         self._map_dependencies()
+        self._list_all_files()
         return self.index
 
     def _detect_project_type(self) -> None:
@@ -282,6 +284,27 @@ class ProjectAnalyzer:
             content = self._read_file("pyproject.toml")
             return f"[tool.{tool}]" in content
         return False
+
+    def _list_all_files(self) -> None:
+        """Recursively list all project files, respecting skip directories."""
+        project_files = []
+        
+        def _walk(directory: Path):
+            try:
+                for item in directory.iterdir():
+                    if item.name in SKIP_DIRS or item.name.startswith('.'):
+                        continue
+                    
+                    if item.is_dir():
+                        _walk(item)
+                    else:
+                        rel_path = str(item.relative_to(self.project_dir))
+                        project_files.append(rel_path)
+            except OSError:
+                pass
+                
+        _walk(self.project_dir)
+        self.index["files"] = sorted(project_files)
 
     def _read_file(self, path: str) -> str:
         try:
