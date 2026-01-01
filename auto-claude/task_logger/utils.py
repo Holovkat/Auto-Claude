@@ -3,6 +3,7 @@ Utility functions for task logging.
 """
 
 from pathlib import Path
+from typing import Optional
 
 from .logger import TaskLogger
 
@@ -11,7 +12,7 @@ _current_logger: TaskLogger | None = None
 
 
 def get_task_logger(
-    spec_dir: Path | None = None, emit_markers: bool = True
+    spec_dir: Optional[Path] = None, emit_markers: bool = True
 ) -> TaskLogger | None:
     """
     Get or create a task logger for the given spec directory.

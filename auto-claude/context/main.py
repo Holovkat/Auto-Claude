@@ -28,6 +28,7 @@ The context builder will:
 
 import json
 from pathlib import Path
+from typing import Optional
 
 from context import (
     ContextBuilder,
@@ -50,7 +51,7 @@ def build_task_context(
     task: str,
     services: list[str] | None = None,
     keywords: list[str] | None = None,
-    output_file: Path | None = None,
+    output_file: Optional[Path] = None,
 ) -> dict:
     """
     Build context for a task and optionally save to file.

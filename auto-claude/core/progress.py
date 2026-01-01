@@ -10,6 +10,7 @@ Enhanced with colored output, icons, and better visual formatting.
 
 import json
 from pathlib import Path
+from typing import Optional
 
 from ui import (
     Icons,
@@ -367,7 +368,7 @@ def get_plan_summary(spec_dir: Path) -> dict:
         }
 
 
-def get_current_phase(spec_dir: Path) -> dict | None:
+def get_current_phase(spec_dir: Path) -> Optional[dict]:
     """Get the current phase being worked on."""
     plan_file = spec_dir / "implementation_plan.json"
 
@@ -399,7 +400,7 @@ def get_current_phase(spec_dir: Path) -> dict | None:
         return None
 
 
-def get_next_subtask(spec_dir: Path) -> dict | None:
+def get_next_subtask(spec_dir: Path) -> Optional[dict]:
     """
     Find the next subtask to work on, respecting phase dependencies.
 

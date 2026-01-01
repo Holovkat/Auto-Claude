@@ -63,8 +63,8 @@ def get_extraction_model() -> str:
 
 def get_session_diff(
     project_dir: Path,
-    commit_before: str | None,
-    commit_after: str | None,
+    commit_before: Optional[str],
+    commit_after: Optional[str],
 ) -> str:
     """
     Get the git diff between two commits.
@@ -111,8 +111,8 @@ def get_session_diff(
 
 def get_changed_files(
     project_dir: Path,
-    commit_before: str | None,
-    commit_after: str | None,
+    commit_before: Optional[str],
+    commit_after: Optional[str],
 ) -> list[str]:
     """
     Get list of files changed between two commits.
@@ -146,8 +146,8 @@ def get_changed_files(
 
 def get_commit_messages(
     project_dir: Path,
-    commit_before: str | None,
-    commit_after: str | None,
+    commit_before: Optional[str],
+    commit_after: Optional[str],
 ) -> str:
     """Get commit messages between two commits."""
     if not commit_before or not commit_after or commit_before == commit_after:
@@ -178,8 +178,8 @@ def gather_extraction_inputs(
     project_dir: Path,
     subtask_id: str,
     session_num: int,
-    commit_before: str | None,
-    commit_after: str | None,
+    commit_before: Optional[str],
+    commit_after: Optional[str],
     success: bool,
     recovery_manager: Any,
 ) -> dict:
@@ -334,8 +334,8 @@ def _format_attempt_history(attempts: list[dict]) -> str:
 
 
 async def run_insight_extraction(
-    inputs: dict, project_dir: Path | None = None
-) -> dict | None:
+    inputs: dict, project_dir: Optional[Path] = None
+) -> Optional[dict]:
     """
     Run the insight extraction using Claude Agent SDK.
 
@@ -400,7 +400,7 @@ async def run_insight_extraction(
         return None
 
 
-def parse_insights(response_text: str) -> dict | None:
+def parse_insights(response_text: str) -> Optional[dict]:
     """
     Parse the LLM response into structured insights.
 
@@ -458,8 +458,8 @@ async def extract_session_insights(
     project_dir: Path,
     subtask_id: str,
     session_num: int,
-    commit_before: str | None,
-    commit_after: str | None,
+    commit_before: Optional[str],
+    commit_after: Optional[str],
     success: bool,
     recovery_manager: Any,
 ) -> dict:

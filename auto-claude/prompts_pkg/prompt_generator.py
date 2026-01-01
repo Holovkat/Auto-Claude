@@ -14,6 +14,7 @@ This approach:
 
 import json
 from pathlib import Path
+from typing import Optional
 
 
 def get_relative_spec_path(spec_dir: Path, project_dir: Path) -> str:
@@ -236,7 +237,7 @@ Before marking complete, verify:
     return "\n".join(sections)
 
 
-def generate_planner_prompt(spec_dir: Path, project_dir: Path | None = None) -> str:
+def generate_planner_prompt(spec_dir: Path, project_dir: Optional[Path] = None) -> str:
     """
     Generate the planner prompt (used only once at start).
     This is a simplified version that focuses on plan creation.

@@ -8,6 +8,7 @@ Shared utility functions for the Auto Claude CLI.
 import os
 import sys
 from pathlib import Path
+from typing import Optional
 
 # Ensure parent directory is in path for imports (before other imports)
 _PARENT_DIR = Path(__file__).parent.parent
@@ -69,7 +70,7 @@ def setup_environment() -> Path:
 
 def find_spec(
     project_dir: Path, spec_identifier: str, dev_mode: bool = False
-) -> Path | None:
+) -> Optional[Path]:
     """
     Find a spec by number or full name.
 
@@ -183,7 +184,7 @@ def print_banner() -> None:
     print(box(content, width=70, style="heavy"))
 
 
-def get_project_dir(provided_dir: Path | None) -> Path:
+def get_project_dir(provided_dir: Optional[Path]) -> Path:
     """
     Determine the project directory.
 

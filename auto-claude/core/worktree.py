@@ -21,6 +21,7 @@ import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
 
 class WorktreeError(Exception):
@@ -52,7 +53,7 @@ class WorktreeManager:
     a corresponding branch auto-claude/{spec-name}.
     """
 
-    def __init__(self, project_dir: Path, base_branch: str | None = None):
+    def __init__(self, project_dir: Path, base_branch: Optional[str] = None):
         self.project_dir = project_dir
         self.base_branch = base_branch or self._detect_base_branch()
         self.worktrees_dir = project_dir / ".worktrees"
@@ -124,7 +125,7 @@ class WorktreeManager:
         return result.stdout.strip()
 
     def _run_git(
-        self, args: list[str], cwd: Path | None = None
+        self, args: list[str], cwd: Optional[Path] = None
     ) -> subprocess.CompletedProcess:
         """Run a git command and return the result."""
         return subprocess.run(
@@ -557,7 +558,7 @@ class WorktreeManager:
     # ==================== Backward Compatibility ====================
     # These methods provide backward compatibility with the old single-worktree API
 
-    def get_staging_path(self) -> Path | None:
+    def get_staging_path(self) -> Optional[Path]:
         """
         Backward compatibility: Get path to any existing spec worktree.
         Prefer using get_worktree_path(spec_name) instead.

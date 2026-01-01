@@ -109,7 +109,7 @@ class AuthDetector(BaseAnalyzer):
                 auth_info["libraries"].append(lib)
                 break
 
-    def _find_user_model(self) -> str | None:
+    def _find_user_model(self) -> Optional[str]:
         """Find the user model file."""
         for model_file in self.USER_MODEL_FILES:
             if self._exists(model_file):

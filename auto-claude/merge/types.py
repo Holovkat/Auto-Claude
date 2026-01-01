@@ -159,8 +159,8 @@ class SemanticChange:
     location: str
     line_start: int
     line_end: int
-    content_before: str | None = None
-    content_after: str | None = None
+    content_before: Optional[str] = None
+    content_after: Optional[str] = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -379,7 +379,7 @@ class TaskSnapshot:
     content_hash_before: str = ""
     content_hash_after: str = ""
     semantic_changes: list[SemanticChange] = field(default_factory=list)
-    raw_diff: str | None = None
+    raw_diff: Optional[str] = None
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
@@ -509,13 +509,13 @@ class MergeResult:
 
     decision: MergeDecision
     file_path: str
-    merged_content: str | None = None
+    merged_content: Optional[str] = None
     conflicts_resolved: list[ConflictRegion] = field(default_factory=list)
     conflicts_remaining: list[ConflictRegion] = field(default_factory=list)
     ai_calls_made: int = 0
     tokens_used: int = 0
     explanation: str = ""
-    error: str | None = None
+    error: Optional[str] = None
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""

@@ -11,7 +11,7 @@ Detects database migration tools and configurations:
 """
 
 from pathlib import Path
-from typing import Any
+from typing import Optional, Any
 
 from ..base import BaseAnalyzer
 
@@ -43,7 +43,7 @@ class MigrationsDetector(BaseAnalyzer):
         if migration_info:
             self.analysis["migrations"] = migration_info
 
-    def _detect_alembic(self) -> dict[str, Any] | None:
+    def _detect_alembic(self) -> Optional[dict[str, Any]]:
         """Detect Alembic (Python) migrations."""
         if not (self._exists("alembic.ini") or self._exists("alembic")):
             return None
@@ -61,7 +61,7 @@ class MigrationsDetector(BaseAnalyzer):
             },
         }
 
-    def _detect_django(self) -> dict[str, Any] | None:
+    def _detect_django(self) -> Optional[dict[str, Any]]:
         """Detect Django migrations."""
         if not self._exists("manage.py"):
             return None
@@ -79,7 +79,7 @@ class MigrationsDetector(BaseAnalyzer):
             },
         }
 
-    def _detect_knex(self) -> dict[str, Any] | None:
+    def _detect_knex(self) -> Optional[dict[str, Any]]:
         """Detect Knex (Node.js) migrations."""
         if not (self._exists("knexfile.js") or self._exists("knexfile.ts")):
             return None
@@ -95,7 +95,7 @@ class MigrationsDetector(BaseAnalyzer):
             },
         }
 
-    def _detect_typeorm(self) -> dict[str, Any] | None:
+    def _detect_typeorm(self) -> Optional[dict[str, Any]]:
         """Detect TypeORM migrations."""
         if not (self._exists("ormconfig.json") or self._exists("data-source.ts")):
             return None
@@ -110,7 +110,7 @@ class MigrationsDetector(BaseAnalyzer):
             },
         }
 
-    def _detect_prisma(self) -> dict[str, Any] | None:
+    def _detect_prisma(self) -> Optional[dict[str, Any]]:
         """Detect Prisma migrations."""
         if not self._exists("prisma/schema.prisma"):
             return None

@@ -6,6 +6,7 @@ import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Optional
 
 from .models import LogEntry, LogPhase
 
@@ -100,7 +101,7 @@ class LogStorage:
         self.save()
 
     def update_phase_status(
-        self, phase: str, status: str, completed_at: str | None = None
+        self, phase: str, status: str, completed_at: Optional[str] = None
     ) -> None:
         """
         Update phase status.
@@ -144,7 +145,7 @@ class LogStorage:
         self._data["spec_id"] = new_spec_id
 
 
-def load_task_logs(spec_dir: Path) -> dict | None:
+def load_task_logs(spec_dir: Path) -> Optional[dict]:
     """
     Load task logs from a spec directory.
 
@@ -165,7 +166,7 @@ def load_task_logs(spec_dir: Path) -> dict | None:
         return None
 
 
-def get_active_phase(spec_dir: Path) -> str | None:
+def get_active_phase(spec_dir: Path) -> Optional[str]:
     """
     Get the currently active phase for a spec.
 

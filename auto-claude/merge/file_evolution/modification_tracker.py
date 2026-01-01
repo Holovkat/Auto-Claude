@@ -9,6 +9,7 @@ Handles recording and analyzing file modifications:
 """
 
 from __future__ import annotations
+from typing import Optional
 
 import logging
 import subprocess
@@ -67,7 +68,7 @@ class ModificationTracker:
         old_content: str,
         new_content: str,
         evolutions: dict[str, FileEvolution],
-        raw_diff: str | None = None,
+        raw_diff: Optional[str] = None,
     ) -> TaskSnapshot | None:
         """
         Record a file modification by a task.

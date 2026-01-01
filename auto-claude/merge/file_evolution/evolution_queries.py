@@ -11,6 +11,7 @@ Provides query and analysis methods for file evolution data:
 """
 
 from __future__ import annotations
+from typing import Optional
 
 import logging
 import shutil
@@ -65,7 +66,7 @@ class EvolutionQueries:
         self,
         file_path: Path | str,
         evolutions: dict[str, FileEvolution],
-    ) -> str | None:
+    ) -> Optional[str]:
         """
         Get the baseline content for a file.
 
@@ -209,7 +210,7 @@ class EvolutionQueries:
         file_path: Path | str,
         evolutions: dict[str, FileEvolution],
         task_ids: list[str] | None = None,
-    ) -> dict | None:
+    ) -> Optional[dict]:
         """
         Export evolution data for a file in a format suitable for merge.
 

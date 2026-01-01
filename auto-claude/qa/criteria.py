@@ -7,6 +7,7 @@ Manages acceptance criteria validation and status tracking.
 
 import json
 from pathlib import Path
+from typing import Optional
 
 from progress import is_build_complete
 
@@ -15,7 +16,7 @@ from progress import is_build_complete
 # =============================================================================
 
 
-def load_implementation_plan(spec_dir: Path) -> dict | None:
+def load_implementation_plan(spec_dir: Path) -> Optional[dict]:
     """Load the implementation plan JSON."""
     plan_file = spec_dir / "implementation_plan.json"
     if not plan_file.exists():
@@ -43,7 +44,7 @@ def save_implementation_plan(spec_dir: Path, plan: dict) -> bool:
 # =============================================================================
 
 
-def get_qa_signoff_status(spec_dir: Path) -> dict | None:
+def get_qa_signoff_status(spec_dir: Path) -> Optional[dict]:
     """Get the current QA sign-off status from implementation plan."""
     plan = load_implementation_plan(spec_dir)
     if not plan:

@@ -5,6 +5,7 @@ Handles initialization of directories, component setup, and configuration valida
 """
 
 from pathlib import Path
+from typing import Optional
 
 from init import init_auto_claude_dir
 
@@ -20,7 +21,7 @@ class IdeationConfigManager:
     def __init__(
         self,
         project_dir: Path,
-        output_dir: Path | None = None,
+        output_dir: Optional[Path] = None,
         enabled_types: list[str] | None = None,
         include_roadmap_context: bool = True,
         include_kanban_context: bool = True,
@@ -70,7 +71,7 @@ class IdeationConfigManager:
         self.prioritizer = IdeaPrioritizer(self.output_dir)
         self.formatter = IdeationFormatter(self.output_dir, self.project_dir)
 
-    def _setup_output_dir(self, output_dir: Path | None) -> Path:
+    def _setup_output_dir(self, output_dir: Optional[Path]) -> Path:
         """Setup and create output directory structure.
 
         Args:

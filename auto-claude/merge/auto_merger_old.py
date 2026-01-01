@@ -20,6 +20,7 @@ Strategies:
 """
 
 from __future__ import annotations
+from typing import Optional
 
 import logging
 import re
@@ -481,7 +482,7 @@ class AutoMerger:
             return line.startswith("import ") or line.startswith("export ")
         return False
 
-    def _extract_hook_call(self, change: SemanticChange) -> str | None:
+    def _extract_hook_call(self, change: SemanticChange) -> Optional[str]:
         """Extract the hook call from a change."""
         if change.content_after:
             # Look for useXxx() pattern
@@ -560,7 +561,7 @@ class AutoMerger:
 
         return content
 
-    def _find_function_insert_position(self, content: str, ext: str) -> int | None:
+    def _find_function_insert_position(self, content: str, ext: str) -> Optional[int]:
         """Find the best position to insert new functions."""
         lines = content.split("\n")
 
@@ -621,7 +622,7 @@ class AutoMerger:
     def _apply_content_change(
         self,
         content: str,
-        old: str | None,
+        old: Optional[str],
         new: str,
     ) -> str:
         """Apply a content change by replacing old with new."""

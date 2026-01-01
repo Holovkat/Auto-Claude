@@ -34,7 +34,7 @@ def is_graphiti_memory_enabled() -> bool:
         return False
 
 
-def get_graphiti_memory(spec_dir: Path, project_dir: Path | None = None):
+def get_graphiti_memory(spec_dir: Path, project_dir: Optional[Path] = None):
     """
     Get a GraphitiMemory instance if available.
 
@@ -83,7 +83,7 @@ async def save_to_graphiti_async(
     spec_dir: Path,
     session_num: int,
     insights: dict[str, Any],
-    project_dir: Path | None = None,
+    project_dir: Optional[Path] = None,
 ) -> bool:
     """
     Save session insights to Graphiti (async helper).

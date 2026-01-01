@@ -12,6 +12,7 @@ This module handles all Git interactions including:
 """
 
 from __future__ import annotations
+from typing import Optional
 
 import logging
 import subprocess
@@ -69,7 +70,7 @@ class TimelineGitHelper:
 
     def get_file_content_at_commit(
         self, file_path: str, commit_hash: str
-    ) -> str | None:
+    ) -> Optional[str]:
         """
         Get file content at a specific commit.
 
@@ -221,7 +222,7 @@ class TimelineGitHelper:
             logger.error(f"Failed to get changed files in worktree: {e}")
             return []
 
-    def get_branch_point(self, worktree_path: Path) -> str | None:
+    def get_branch_point(self, worktree_path: Path) -> Optional[str]:
         """
         Get the branch point (merge-base with main) for a worktree.
 

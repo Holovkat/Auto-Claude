@@ -9,6 +9,7 @@ Data classes and enums for workspace management.
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
+from typing import Optional
 
 
 class WorkspaceMode(Enum):
@@ -34,7 +35,7 @@ class ParallelMergeTask:
     file_path: str
     main_content: str
     worktree_content: str
-    base_content: str | None
+    base_content: Optional[str]
     spec_name: str
 
 
@@ -43,9 +44,9 @@ class ParallelMergeResult:
     """Result of a parallel merge task."""
 
     file_path: str
-    merged_content: str | None
+    merged_content: Optional[str]
     success: bool
-    error: str | None = None
+    error: Optional[str] = None
     was_auto_merged: bool = False  # True if git auto-merged without AI
 
 

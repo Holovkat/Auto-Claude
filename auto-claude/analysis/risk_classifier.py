@@ -127,7 +127,7 @@ class RiskAssessment:
     recommended_phases: list[str]
     flags: AssessmentFlags
     validation: ValidationRecommendations
-    created_at: str | None = None
+    created_at: Optional[str] = None
 
     @property
     def risk_level(self) -> str:

@@ -21,6 +21,7 @@ Usage:
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Optional
 
 
 @dataclass
@@ -45,7 +46,7 @@ class ServiceContext:
 class ServiceContextGenerator:
     """Generates SERVICE_CONTEXT.md files for services."""
 
-    def __init__(self, project_dir: Path, project_index: dict | None = None):
+    def __init__(self, project_dir: Path, project_index: Optional[dict] = None):
         self.project_dir = project_dir.resolve()
         self.project_index = project_index or self._load_project_index()
 
@@ -370,7 +371,7 @@ class ServiceContextGenerator:
     def generate_and_save(
         self,
         service_name: str,
-        output_path: Path | None = None,
+        output_path: Optional[Path] = None,
     ) -> Path:
         """Generate SERVICE_CONTEXT.md and save to file."""
         context = self.generate_for_service(service_name)
@@ -387,7 +388,7 @@ class ServiceContextGenerator:
         return output_path
 
 
-def generate_all_contexts(project_dir: Path, project_index: dict | None = None):
+def generate_all_contexts(project_dir: Path, project_index: Optional[dict] = None):
     """Generate SERVICE_CONTEXT.md for all services in the project."""
     generator = ServiceContextGenerator(project_dir, project_index)
 

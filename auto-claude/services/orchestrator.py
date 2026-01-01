@@ -48,11 +48,11 @@ class ServiceConfig:
     """
 
     name: str
-    path: str | None = None
-    port: int | None = None
+    path: Optional[str] = None
+    port: Optional[int] = None
     type: str = "docker"  # docker, local, mock
-    health_check_url: str | None = None
-    startup_command: str | None = None
+    health_check_url: Optional[str] = None
+    startup_command: Optional[str] = None
     startup_timeout: int = 120
 
 
@@ -97,7 +97,7 @@ class ServiceOrchestrator:
             project_dir: Path to the project root
         """
         self.project_dir = Path(project_dir)
-        self._compose_file: Path | None = None
+        self._compose_file: Optional[Path] = None
         self._services: list[ServiceConfig] = []
         self._processes: dict[str, subprocess.Popen] = {}
         self._discover_services()
@@ -113,7 +113,7 @@ class ServiceOrchestrator:
             # Check for monorepo structure
             self._discover_monorepo_services()
 
-    def _find_compose_file(self) -> Path | None:
+    def _find_compose_file(self) -> Optional[Path]:
         """Find docker-compose configuration file."""
         candidates = [
             "docker-compose.yml",

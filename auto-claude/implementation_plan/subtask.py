@@ -9,6 +9,7 @@ and output capabilities.
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Optional
 
 from .enums import SubtaskStatus
 from .verification import Verification
@@ -23,7 +24,7 @@ class Subtask:
     status: SubtaskStatus = SubtaskStatus.PENDING
 
     # Scoping
-    service: str | None = None  # Which service (backend, frontend, worker)
+    service: Optional[str] = None  # Which service (backend, frontend, worker)
     all_services: bool = False  # True for integration subtasks
 
     # Files
@@ -35,16 +36,16 @@ class Subtask:
     verification: Verification | None = None
 
     # For investigation subtasks
-    expected_output: str | None = None  # Knowledge/decision output
-    actual_output: str | None = None  # What was discovered
+    expected_output: Optional[str] = None  # Knowledge/decision output
+    actual_output: Optional[str] = None  # What was discovered
 
     # Tracking
-    started_at: str | None = None
-    completed_at: str | None = None
-    session_id: int | None = None  # Which session completed this
+    started_at: Optional[str] = None
+    completed_at: Optional[str] = None
+    session_id: Optional[int] = None  # Which session completed this
 
     # Self-Critique
-    critique_result: dict | None = None  # Results from self-critique before completion
+    critique_result: Optional[dict] = None  # Results from self-critique before completion
 
     def to_dict(self) -> dict:
         """Convert to dictionary representation."""
@@ -113,14 +114,14 @@ class Subtask:
         self.completed_at = None
         self.actual_output = None
 
-    def complete(self, output: str | None = None):
+    def complete(self, output: Optional[str] = None):
         """Mark subtask as done."""
         self.status = SubtaskStatus.COMPLETED
         self.completed_at = datetime.now().isoformat()
         if output:
             self.actual_output = output
 
-    def fail(self, reason: str | None = None):
+    def fail(self, reason: Optional[str] = None):
         """Mark subtask as failed."""
         self.status = SubtaskStatus.FAILED
         self.completed_at = None  # Clear to maintain consistency (failed != completed)

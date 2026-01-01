@@ -7,6 +7,7 @@ Reusable user input collection utilities for CLI commands.
 
 import sys
 from pathlib import Path
+from typing import Optional
 
 # Ensure parent directory is in path for imports (before other imports)
 _PARENT_DIR = Path(__file__).parent.parent
@@ -30,7 +31,7 @@ def collect_user_input_interactive(
     prompt_text: str,
     allow_file: bool = True,
     allow_paste: bool = True,
-) -> str | None:
+) -> Optional[str]:
     """
     Collect user input through an interactive menu.
 
@@ -125,7 +126,7 @@ def collect_user_input_interactive(
     return user_input
 
 
-def read_from_file() -> str | None:
+def read_from_file() -> Optional[str]:
     """
     Read text content from a file path provided by the user.
 
@@ -170,7 +171,7 @@ def read_from_file() -> str | None:
         return None
 
 
-def read_multiline_input(prompt_text: str) -> str | None:
+def read_multiline_input(prompt_text: str) -> Optional[str]:
     """
     Read multi-line input from the user.
 

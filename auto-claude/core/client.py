@@ -8,13 +8,14 @@ Functions for creating and configuring the Claude Agent SDK client.
 import json
 import os
 from pathlib import Path
+from typing import Optional
 
 from auto_claude_tools import (
     create_auto_claude_mcp_server,
     get_allowed_tools,
     is_tools_available,
 )
-from .engine import AgentOptions, BaseAgentEngine, ClaudeAgentEngine, GeminiAgentEngine
+from .engine import AgentOptions, BaseAgentEngine, ClaudeAgentEngine, GeminiAgentEngine, OpenAIAgentEngine
 from .auth import get_sdk_env_vars, require_auth_token
 from linear_updater import is_linear_enabled
 from security import bash_security_hook
@@ -130,7 +131,7 @@ def create_client(
     model: str,
     agent_type: str = "coder",
     verbose: bool = False,
-    cwd: Path | None = None,
+    cwd: Optional[Path] = None,
 ) -> BaseAgentEngine:
     """
     Create a Claude Agent SDK client with multi-layered security.
@@ -324,5 +325,7 @@ def create_client(
 
     if model.startswith("gemini"):
         return GeminiAgentEngine(options)
+    elif model.startswith("glm") or model.startswith("ollama") or model.startswith("openai") or model.startswith("z-"):
+        return OpenAIAgentEngine(options)
     else:
         return ClaudeAgentEngine(options)

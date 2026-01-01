@@ -36,14 +36,14 @@ class MainBranchEvent:
 
     # Source of change
     source: Literal["human", "merged_task"]
-    merged_from_task: str | None = None  # If source is 'merged_task'
+    merged_from_task: Optional[str] = None  # If source is 'merged_task'
 
     # Intent/reason for change
     commit_message: str = ""
 
     # For richer context (optional)
-    author: str | None = None
-    diff_summary: str | None = None  # e.g., "+15 -3 lines"
+    author: Optional[str] = None
+    diff_summary: Optional[str] = None  # e.g., "+15 -3 lines"
 
     def to_dict(self) -> dict:
         return {

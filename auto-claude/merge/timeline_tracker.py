@@ -11,6 +11,7 @@ This service is the "brain" of the intent-aware merge system. It:
 """
 
 from __future__ import annotations
+from typing import Optional
 
 import logging
 from datetime import datetime
@@ -55,7 +56,7 @@ class FileTimelineTracker:
     This service is the "brain" of the intent-aware merge system.
     """
 
-    def __init__(self, project_path: Path, storage_path: Path | None = None):
+    def __init__(self, project_path: Path, storage_path: Optional[Path] = None):
         """
         Initialize the file timeline tracker.
 
@@ -95,7 +96,7 @@ class FileTimelineTracker:
         task_id: str,
         files_to_modify: list[str],
         files_to_create: list[str] | None = None,
-        branch_point_commit: str | None = None,
+        branch_point_commit: Optional[str] = None,
         task_intent: str = "",
         task_title: str = "",
     ) -> None:

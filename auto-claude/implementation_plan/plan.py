@@ -11,6 +11,7 @@ import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 from .enums import PhaseType, SubtaskStatus, WorkflowType
 from .phase import Phase
@@ -28,17 +29,17 @@ class ImplementationPlan:
     final_acceptance: list[str] = field(default_factory=list)
 
     # Metadata
-    created_at: str | None = None
-    updated_at: str | None = None
-    spec_file: str | None = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+    spec_file: Optional[str] = None
 
     # Task status (synced with UI)
     # status: backlog, in_progress, ai_review, human_review, done
     # planStatus: pending, in_progress, review, completed
-    status: str | None = None
-    planStatus: str | None = None
-    recoveryNote: str | None = None
-    qa_signoff: dict | None = None
+    status: Optional[str] = None
+    planStatus: Optional[str] = None
+    recoveryNote: Optional[str] = None
+    qa_signoff: Optional[dict] = None
 
     def to_dict(self) -> dict:
         """Convert to dictionary representation."""

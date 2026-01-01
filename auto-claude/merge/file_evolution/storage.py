@@ -9,6 +9,7 @@ Handles file system operations for evolution tracking:
 """
 
 from __future__ import annotations
+from typing import Optional
 
 import json
 import logging
@@ -124,7 +125,7 @@ class EvolutionStorage:
 
         return str(baseline_path.relative_to(self.storage_dir))
 
-    def read_baseline_content(self, baseline_snapshot_path: str) -> str | None:
+    def read_baseline_content(self, baseline_snapshot_path: str) -> Optional[str]:
         """
         Read baseline content from disk.
 
@@ -142,7 +143,7 @@ class EvolutionStorage:
                 logger.warning(f"Could not read baseline {baseline_snapshot_path}: {e}")
         return None
 
-    def read_file_content(self, file_path: Path | str) -> str | None:
+    def read_file_content(self, file_path: Path | str) -> Optional[str]:
         """
         Read file content from project directory.
 

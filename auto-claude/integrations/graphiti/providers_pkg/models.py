@@ -1,3 +1,4 @@
+from typing import Optional
 """
 Graphiti Provider Models and Constants
 =======================================
@@ -26,7 +27,7 @@ EMBEDDING_DIMENSIONS = {
 }
 
 
-def get_expected_embedding_dim(model: str) -> int | None:
+def get_expected_embedding_dim(model: str) -> Optional[int]:
     """
     Get the expected embedding dimension for a known model.
 

@@ -10,6 +10,7 @@ Main entry point that orchestrates the modular components:
 """
 
 from __future__ import annotations
+from typing import Optional
 
 import logging
 from pathlib import Path
@@ -66,7 +67,7 @@ class FileEvolutionTracker:
     def __init__(
         self,
         project_dir: Path,
-        storage_dir: Path | None = None,
+        storage_dir: Optional[Path] = None,
         semantic_analyzer: SemanticAnalyzer | None = None,
     ):
         """
@@ -157,7 +158,7 @@ class FileEvolutionTracker:
         file_path: Path | str,
         old_content: str,
         new_content: str,
-        raw_diff: str | None = None,
+        raw_diff: Optional[str] = None,
     ) -> TaskSnapshot | None:
         """
         Record a file modification by a task.
@@ -197,7 +198,7 @@ class FileEvolutionTracker:
         """
         return self.queries.get_file_evolution(file_path, self._evolutions)
 
-    def get_baseline_content(self, file_path: Path | str) -> str | None:
+    def get_baseline_content(self, file_path: Path | str) -> Optional[str]:
         """
         Get the baseline content for a file.
 
@@ -302,7 +303,7 @@ class FileEvolutionTracker:
         self,
         file_path: Path | str,
         task_ids: list[str] | None = None,
-    ) -> dict | None:
+    ) -> Optional[dict]:
         """
         Export evolution data for a file in a format suitable for merge.
 

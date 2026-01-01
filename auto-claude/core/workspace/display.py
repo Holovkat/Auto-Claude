@@ -7,6 +7,7 @@ Functions for displaying workspace information and build summaries.
 """
 
 from ui import (
+from typing import Optional
     bold,
     error,
     info,
@@ -72,8 +73,8 @@ def show_changed_files(manager: WorktreeManager, spec_name: str) -> None:
 
 def print_merge_success(
     no_commit: bool,
-    stats: dict | None = None,
-    spec_name: str | None = None,
+    stats: Optional[dict] = None,
+    spec_name: Optional[str] = None,
     keep_worktree: bool = False,
 ) -> None:
     """Print a success message after merge."""

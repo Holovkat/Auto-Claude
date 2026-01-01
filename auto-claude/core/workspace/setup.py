@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from typing import Optional
 
 from merge import FileTimelineTracker
 from ui import (
@@ -183,8 +184,8 @@ def setup_workspace(
     project_dir: Path,
     spec_name: str,
     mode: WorkspaceMode,
-    source_spec_dir: Path | None = None,
-    base_branch: str | None = None,
+    source_spec_dir: Optional[Path] = None,
+    base_branch: Optional[str] = None,
 ) -> tuple[Path, WorktreeManager | None, Path | None]:
     """
     Set up the workspace based on user's choice.
@@ -294,7 +295,7 @@ def initialize_timeline_tracking(
     project_dir: Path,
     spec_name: str,
     worktree_path: Path,
-    source_spec_dir: Path | None = None,
+    source_spec_dir: Optional[Path] = None,
 ) -> None:
     """
     Initialize FileTimelineTracker for a new task.

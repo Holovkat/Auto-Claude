@@ -12,6 +12,7 @@ Uses Claude agents to generate ideas of different types:
 
 import sys
 from pathlib import Path
+from typing import Optional
 
 # Add auto-claude to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -201,7 +202,7 @@ Write the fixed JSON to the file now.
             print_status(f"Recovery agent error: {e}", "error")
             return False
 
-    def get_prompt_file(self, ideation_type: str) -> str | None:
+    def get_prompt_file(self, ideation_type: str) -> Optional[str]:
         """Get the prompt file for a specific ideation type."""
         return IDEATION_TYPE_PROMPTS.get(ideation_type)
 

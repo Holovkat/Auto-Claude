@@ -77,7 +77,7 @@ class CIConfig:
     ci_system: str
     config_files: list[str] = field(default_factory=list)
     test_commands: dict[str, str] = field(default_factory=dict)
-    coverage_command: str | None = None
+    coverage_command: Optional[str] = None
     workflows: list[CIWorkflow] = field(default_factory=list)
     environment_variables: list[str] = field(default_factory=list)
 
@@ -405,7 +405,7 @@ class CIDiscovery:
 
         return result
 
-    def _parse_yaml(self, content: str) -> dict | None:
+    def _parse_yaml(self, content: str) -> Optional[dict]:
         """Parse YAML content, with fallback to basic parsing if yaml not available."""
         if HAS_YAML:
             try:
@@ -524,7 +524,7 @@ def get_ci_test_commands(project_dir: Path) -> dict[str, str]:
     return {}
 
 
-def get_ci_system(project_dir: Path) -> str | None:
+def get_ci_system(project_dir: Path) -> Optional[str]:
     """
     Get the CI system name if configured.
 

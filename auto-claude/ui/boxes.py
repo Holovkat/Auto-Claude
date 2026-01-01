@@ -6,13 +6,14 @@ Functions for drawing boxes and dividers in terminal output.
 """
 
 import re
+from typing import Union, List
 
 from .capabilities import FANCY_UI
 from .icons import Icons, icon
 
 
 def box(
-    content: str | list[str],
+    content: Union[str, List[str]],
     title: str = "",
     width: int = 70,
     style: str = "heavy",

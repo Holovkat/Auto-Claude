@@ -11,12 +11,13 @@ This module provides utilities for:
 """
 
 from __future__ import annotations
+from typing import Optional
 
 import subprocess
 from pathlib import Path
 
 
-def find_worktree(project_dir: Path, task_id: str) -> Path | None:
+def find_worktree(project_dir: Path, task_id: str) -> Optional[Path]:
     """
     Find the worktree path for a task.
 
@@ -53,7 +54,7 @@ def find_worktree(project_dir: Path, task_id: str) -> Path | None:
     return None
 
 
-def get_file_from_branch(project_dir: Path, file_path: str, branch: str) -> str | None:
+def get_file_from_branch(project_dir: Path, file_path: str, branch: str) -> Optional[str]:
     """
     Get file content from a specific git branch.
 

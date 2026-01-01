@@ -6,6 +6,7 @@ Helper utilities for merge operations.
 """
 
 from __future__ import annotations
+from typing import Optional
 
 import re
 
@@ -45,7 +46,7 @@ class MergeHelpers:
         return False
 
     @staticmethod
-    def extract_hook_call(change: SemanticChange) -> str | None:
+    def extract_hook_call(change: SemanticChange) -> Optional[str]:
         """Extract the hook call from a change."""
         if change.content_after:
             # Look for useXxx() pattern
@@ -126,7 +127,7 @@ class MergeHelpers:
         return content
 
     @staticmethod
-    def find_function_insert_position(content: str, ext: str) -> int | None:
+    def find_function_insert_position(content: str, ext: str) -> Optional[int]:
         """Find the best position to insert new functions."""
         lines = content.split("\n")
 
@@ -188,7 +189,7 @@ class MergeHelpers:
     @staticmethod
     def apply_content_change(
         content: str,
-        old: str | None,
+        old: Optional[str],
         new: str,
     ) -> str:
         """Apply a content change by replacing old with new."""

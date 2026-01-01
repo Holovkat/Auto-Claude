@@ -9,7 +9,7 @@ Detects API documentation tools and configurations:
 """
 
 from pathlib import Path
-from typing import Any
+from typing import Optional, Any
 
 from ..base import BaseAnalyzer
 
@@ -42,7 +42,7 @@ class ApiDocsDetector(BaseAnalyzer):
         if docs_info:
             self.analysis["api_documentation"] = docs_info
 
-    def _detect_fastapi(self) -> dict[str, Any] | None:
+    def _detect_fastapi(self) -> Optional[dict[str, Any]]:
         """Detect FastAPI auto-generated OpenAPI docs."""
         if self.analysis.get("framework") != "FastAPI":
             return None
@@ -55,7 +55,7 @@ class ApiDocsDetector(BaseAnalyzer):
             "openapi_url": "/openapi.json",
         }
 
-    def _detect_swagger_nodejs(self) -> dict[str, Any] | None:
+    def _detect_swagger_nodejs(self) -> Optional[dict[str, Any]]:
         """Detect Swagger for Node.js projects."""
         if not self._exists("package.json"):
             return None
@@ -74,7 +74,7 @@ class ApiDocsDetector(BaseAnalyzer):
 
         return None
 
-    def _detect_graphql(self) -> dict[str, str] | None:
+    def _detect_graphql(self) -> Optional[dict[str, str]]:
         """Detect GraphQL API and playground."""
         if not self._exists("package.json"):
             return None

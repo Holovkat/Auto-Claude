@@ -26,7 +26,7 @@ __all__ = [
 ]
 
 
-def analyze_project(project_dir: Path, output_file: Path | None = None) -> dict:
+def analyze_project(project_dir: Path, output_file: Optional[Path] = None) -> dict:
     """
     Analyze a project and optionally save results.
 
@@ -52,7 +52,7 @@ def analyze_project(project_dir: Path, output_file: Path | None = None) -> dict:
 
 
 def analyze_service(
-    project_dir: Path, service_name: str, output_file: Path | None = None
+    project_dir: Path, service_name: str, output_file: Optional[Path] = None
 ) -> dict:
     """
     Analyze a specific service within a project.

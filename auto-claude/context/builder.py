@@ -9,6 +9,7 @@ import asyncio
 import json
 from dataclasses import asdict
 from pathlib import Path
+from typing import Optional
 
 from .categorizer import FileCategorizer
 from .graphiti_integration import fetch_graph_hints, is_graphiti_enabled
@@ -22,7 +23,7 @@ from .service_matcher import ServiceMatcher
 class ContextBuilder:
     """Builds task-specific context by searching the codebase."""
 
-    def __init__(self, project_dir: Path, project_index: dict | None = None):
+    def __init__(self, project_dir: Path, project_index: Optional[dict] = None):
         self.project_dir = project_dir.resolve()
         self.project_index = project_index or self._load_project_index()
 

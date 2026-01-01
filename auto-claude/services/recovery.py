@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
+from typing import Optional
 
 
 class FailureType(Enum):
@@ -203,7 +204,7 @@ class RecoveryManager:
         session: int,
         success: bool,
         approach: str,
-        error: str | None = None,
+        error: Optional[str] = None,
     ) -> None:
         """
         Record an attempt at a subtask.
@@ -382,7 +383,7 @@ class RecoveryManager:
                     reason=f"Unknown error persists after {attempt_count} attempts",
                 )
 
-    def get_last_good_commit(self) -> str | None:
+    def get_last_good_commit(self) -> Optional[str]:
         """
         Find the most recent commit where build was working.
 
@@ -561,7 +562,7 @@ class RecoveryManager:
 
 
 def check_and_recover(
-    spec_dir: Path, project_dir: Path, subtask_id: str, error: str | None = None
+    spec_dir: Path, project_dir: Path, subtask_id: str, error: Optional[str] = None
 ) -> RecoveryAction | None:
     """
     Check if recovery is needed and return appropriate action.

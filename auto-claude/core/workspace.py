@@ -19,6 +19,7 @@ Public API is exported via workspace/__init__.py for backward compatibility.
 
 import subprocess
 from pathlib import Path
+from typing import Optional
 
 from ui import (
     Icons,
@@ -281,7 +282,7 @@ def _try_smart_merge(
     worktree_path: Path,
     manager: WorktreeManager,
     no_commit: bool = False,
-) -> dict | None:
+) -> Optional[dict]:
     """
     Try to use the intent-aware merge system.
 
@@ -314,7 +315,7 @@ def _try_smart_merge_inner(
     worktree_path: Path,
     manager: WorktreeManager,
     no_commit: bool = False,
-) -> dict | None:
+) -> Optional[dict]:
     """Inner implementation of smart merge (called with lock held)."""
     debug(
         MODULE,

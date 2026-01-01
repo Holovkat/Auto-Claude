@@ -19,6 +19,7 @@ import json
 import os
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 from .config import (
     LABELS,
@@ -82,7 +83,7 @@ class LinearManager:
         """Check if Linear project has been initialized for this spec."""
         return self.state is not None and self.state.initialized
 
-    def get_issue_id(self, subtask_id: str) -> str | None:
+    def get_issue_id(self, subtask_id: str) -> Optional[str]:
         """
         Get the Linear issue ID for a subtask.
 
@@ -151,7 +152,7 @@ class LinearManager:
             self.state.meta_issue_id = meta_issue_id
             self.state.save(self.spec_dir)
 
-    def load_implementation_plan(self) -> dict | None:
+    def load_implementation_plan(self) -> Optional[dict]:
         """Load the implementation plan from spec directory."""
         plan_file = self.spec_dir / "implementation_plan.json"
         if not plan_file.exists():

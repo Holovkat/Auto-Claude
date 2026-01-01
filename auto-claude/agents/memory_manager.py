@@ -9,6 +9,7 @@ Handles session memory storage using dual-layer approach:
 
 import logging
 from pathlib import Path
+from typing import Optional
 
 from debug import (
     debug,
@@ -85,7 +86,7 @@ async def get_graphiti_context(
     spec_dir: Path,
     project_dir: Path,
     subtask: dict,
-) -> str | None:
+) -> Optional[str]:
     """
     Retrieve relevant context from Graphiti for the current subtask.
 
@@ -210,7 +211,7 @@ async def save_session_memory(
     session_num: int,
     success: bool,
     subtasks_completed: list[str],
-    discoveries: dict | None = None,
+    discoveries: Optional[dict] = None,
 ) -> tuple[bool, str]:
     """
     Save session insights to memory.
@@ -401,7 +402,7 @@ async def save_session_to_graphiti(
     session_num: int,
     success: bool,
     subtasks_completed: list[str],
-    discoveries: dict | None = None,
+    discoveries: Optional[dict] = None,
 ) -> bool:
     """Backwards compatibility wrapper for save_session_memory."""
     result, _ = await save_session_memory(

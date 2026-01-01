@@ -73,7 +73,7 @@ class PortDetector(BaseAnalyzer):
         # Fall back to default
         return default_port
 
-    def _detect_port_in_entry_points(self) -> int | None:
+    def _detect_port_in_entry_points(self) -> Optional[int]:
         """Detect port in entry point files."""
         entry_files = [
             "app.py",
@@ -144,7 +144,7 @@ class PortDetector(BaseAnalyzer):
 
         return None
 
-    def _detect_port_in_env_files(self) -> int | None:
+    def _detect_port_in_env_files(self) -> Optional[int]:
         """Detect port in environment files."""
         env_files = [
             ".env",
@@ -180,7 +180,7 @@ class PortDetector(BaseAnalyzer):
 
         return None
 
-    def _detect_port_in_docker_compose(self) -> int | None:
+    def _detect_port_in_docker_compose(self) -> Optional[int]:
         """Detect port from docker-compose.yml mappings."""
         compose_files = [
             "docker-compose.yml",
@@ -237,7 +237,7 @@ class PortDetector(BaseAnalyzer):
 
         return None
 
-    def _detect_port_in_config_files(self) -> int | None:
+    def _detect_port_in_config_files(self) -> Optional[int]:
         """Detect port in configuration files."""
         config_files = [
             "config.py",
@@ -274,7 +274,7 @@ class PortDetector(BaseAnalyzer):
 
         return None
 
-    def _detect_port_in_package_scripts(self) -> int | None:
+    def _detect_port_in_package_scripts(self) -> Optional[int]:
         """Detect port in package.json scripts."""
         pkg = self._read_json("package.json")
         if not pkg:
@@ -307,7 +307,7 @@ class PortDetector(BaseAnalyzer):
 
         return None
 
-    def _detect_port_in_scripts(self) -> int | None:
+    def _detect_port_in_scripts(self) -> Optional[int]:
         """Detect port in Makefile or shell scripts."""
         script_files = ["Makefile", "start.sh", "run.sh", "dev.sh"]
 

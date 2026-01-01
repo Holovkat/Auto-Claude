@@ -10,11 +10,12 @@ import logging
 import shutil
 import subprocess
 from pathlib import Path
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 
-def get_latest_commit(project_dir: Path) -> str | None:
+def get_latest_commit(project_dir: Path) -> Optional[str]:
     """Get the hash of the latest git commit."""
     try:
         result = subprocess.run(
@@ -44,7 +45,7 @@ def get_commit_count(project_dir: Path) -> int:
         return 0
 
 
-def load_implementation_plan(spec_dir: Path) -> dict | None:
+def load_implementation_plan(spec_dir: Path) -> Optional[dict]:
     """Load the implementation plan JSON."""
     plan_file = spec_dir / "implementation_plan.json"
     if not plan_file.exists():
@@ -56,7 +57,7 @@ def load_implementation_plan(spec_dir: Path) -> dict | None:
         return None
 
 
-def find_subtask_in_plan(plan: dict, subtask_id: str) -> dict | None:
+def find_subtask_in_plan(plan: dict, subtask_id: str) -> Optional[dict]:
     """Find a subtask by ID in the plan."""
     for phase in plan.get("phases", []):
         for subtask in phase.get("subtasks", []):
@@ -65,7 +66,7 @@ def find_subtask_in_plan(plan: dict, subtask_id: str) -> dict | None:
     return None
 
 
-def find_phase_for_subtask(plan: dict, subtask_id: str) -> dict | None:
+def find_phase_for_subtask(plan: dict, subtask_id: str) -> Optional[dict]:
     """Find the phase containing a subtask."""
     for phase in plan.get("phases", []):
         for subtask in phase.get("subtasks", []):
@@ -74,7 +75,7 @@ def find_phase_for_subtask(plan: dict, subtask_id: str) -> dict | None:
     return None
 
 
-def sync_plan_to_source(spec_dir: Path, source_spec_dir: Path | None) -> bool:
+def sync_plan_to_source(spec_dir: Path, source_spec_dir: Optional[Path]) -> bool:
     """
     Sync implementation_plan.json from worktree back to source spec directory.
 

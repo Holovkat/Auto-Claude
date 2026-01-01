@@ -568,3 +568,285 @@ class UserMessage:
     def __iter__(self):
         # Allow iterating over content blocks for compatibility
         return iter(self.content or [])
+
+
+class OpenAIAgentEngine(BaseAgentEngine):
+    """
+    Engine that communicates with OpenAI-compatible APIs (Ollama, GLM, etc).
+    """
+
+    def __init__(self, options: AgentOptions):
+        super().__init__(options)
+        try:
+            from openai import AsyncOpenAI
+        except ImportError:
+            raise RuntimeError("openai package not installed. Run 'pip install openai'")
+
+        # Determine configuration
+        env = options.env or {}
+        
+        # Priority: Options > Env Vars > Defaults
+        self.api_key = env.get("ZAI_API_KEY") or env.get("OPENAI_API_KEY") or os.environ.get("ZAI_API_KEY") or os.environ.get("OPENAI_API_KEY")
+        self.base_url = env.get("OPENAI_BASE_URL") or os.environ.get("OPENAI_BASE_URL") or "https://api.openai.com/v1"
+
+        # Special handling for Z.ai GLM if detected/configured
+        # GLM/Z.ai specific URL
+        if "z.ai" in str(self.base_url) or "glm" in options.model.lower():
+             if not self.base_url or "api.openai.com" in self.base_url:
+                 self.base_url = "https://api.z.ai/api/coding/paas/v4"
+
+        if not self.api_key:
+            # Some local endpoints (Ollama) might not need a key, but library usually requires one
+            self.api_key = "dummy-key" 
+
+        self.client = AsyncOpenAI(
+            api_key=self.api_key,
+            base_url=self.base_url
+        )
+        
+        self.system_prompt = options.system_prompt
+        self.history = [] # List of {"role": "...", "content": "..."}
+        self._set_system_prompt_msg()
+
+    def _set_system_prompt_msg(self):
+        # Initialize or update system prompt in history
+        if not self.history:
+            self.history.append({"role": "system", "content": self.system_prompt})
+        elif self.history[0]["role"] == "system":
+            self.history[0]["content"] = self.system_prompt
+        else:
+            self.history.insert(0, {"role": "system", "content": self.system_prompt})
+
+    def set_system_prompt(self, prompt: str) -> None:
+        self.system_prompt = prompt
+        self._set_system_prompt_msg()
+
+    async def query(self, message: str) -> None:
+        self.history.append({"role": "user", "content": message})
+
+    async def receive_response(self) -> AsyncIterator[Any]:
+        # Define tools using OpenAI format
+        tools = self._get_openai_tools()
+        
+        while True:
+            # Common arguments
+            kwargs = {
+                "model": self.options.model,
+                "messages": self.history,
+                "stream": True,
+            }
+            if tools:
+                kwargs["tools"] = tools
+                kwargs["tool_choice"] = "auto"
+
+            response_stream = await self.client.chat.completions.create(**kwargs)
+            
+            tool_calls = []
+            current_content = ""
+            current_tool_call = None
+            
+            # OpenAI streaming tool calls are tricky, they come in chunks
+            async for chunk in response_stream:
+                delta = chunk.choices[0].delta
+                
+                # Yield content
+                if delta.content:
+                    current_content += delta.content
+                    # We wrap it in the AssistantMessage format expected by UI
+                    # (See existing Gemini/Claude implementations)
+                    yield AssistantMessage(chunk) 
+
+                # Collect tool calls
+                if delta.tool_calls:
+                    for tc_chunk in delta.tool_calls:
+                        if len(tool_calls) <= tc_chunk.index:
+                            tool_calls.append({
+                                "id": "", "type": "function", "function": {"name": "", "arguments": ""}
+                            })
+                        
+                        tc = tool_calls[tc_chunk.index]
+                        if tc_chunk.id: tc["id"] += tc_chunk.id
+                        if tc_chunk.function.name: tc["function"]["name"] += tc_chunk.function.name
+                        if tc_chunk.function.arguments: tc["function"]["arguments"] += tc_chunk.function.arguments
+
+            # Add assistant response to history
+            if current_content:
+                self.history.append({"role": "assistant", "content": current_content})
+            
+            if tool_calls:
+                 # If we have tool calls, we must execute them and recurse
+                 # Add tool calls to history first
+                 # Note: standard OpenAI messages objects requires correctly formatted tool_calls
+                 # But we might need to reconstruct the message object from chunks...
+                 # Simplification: assuming we reconstructed enough.
+                 
+                 # Reconstruct full tool call objects
+                 full_tool_calls_msg = {
+                     "role": "assistant",
+                     "content": current_content or None,
+                     "tool_calls": tool_calls
+                 }
+                 self.history.append(full_tool_calls_msg)
+
+                 async for res in self._handle_tool_calls(tool_calls):
+                     yield res
+                 # Loop initiates next request with tool outputs
+            else:
+                break
+
+    async def _handle_tool_calls(self, tool_calls):
+         from .tools.builtin import read_file, write_file, edit_file, glob_files, grep_files, execute_bash
+         import json
+
+         for tc in tool_calls:
+             func = tc["function"]
+             name = func["name"]
+             try:
+                 args = json.loads(func["arguments"])
+             except:
+                 args = {} 
+             
+             # Resolve paths (similar to Gemini engine)
+             cwd = Path(self.options.cwd) if self.options.cwd else Path.cwd()
+             if "file_path" in args:
+                 try:
+                     fp = Path(args["file_path"])
+                     if not fp.is_absolute():
+                         args["file_path"] = str(cwd / fp)
+                 except: pass
+
+             if "root_dir" in args: # For glob/grep
+                 pass # usually handled inside tool or needs implementing
+
+             # Dispatch
+             result = ""
+             if name == "Read": result = read_file(**args)
+             elif name == "Write": result = write_file(**args)
+             elif name == "Edit": result = edit_file(**args)
+             elif name == "Glob": 
+                  if "root_dir" not in args: args["root_dir"] = str(cwd)
+                  result = glob_files(**args)
+             elif name == "Grep":
+                  if "root_dir" not in args: args["root_dir"] = str(cwd)
+                  result = grep_files(**args)
+             elif name == "Bash": result = execute_bash(command=args.get("command"), cwd=self.options.cwd)
+             else: result = f"Error: Tool {name} not found"
+
+             # Append to history
+             self.history.append({
+                 "role": "tool",
+                 "tool_call_id": tc["id"],
+                 "name": name,
+                 "content": str(result)
+             })
+
+             # We also yield these as UserMessage so the UI sees the tool execution
+             # (This matches the interface expected by ReceiveResponse consumers)
+             yield UserMessage(tool_use_id=tc["id"], content=str(result))
+
+
+    def _get_openai_tools(self):
+        # Convert self.options.allowed_tools to OpenAI format
+        tools = []
+        for name in self.options.allowed_tools:
+            if name == "Read":
+                tools.append({
+                    "type": "function",
+                    "function": {
+                        "name": "Read",
+                        "description": "Read file content",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "file_path": {"type": "string"},
+                                "start_line": {"type": "integer"},
+                                "end_line": {"type": "integer"}
+                            },
+                            "required": ["file_path"]
+                        }
+                    }
+                })
+            elif name == "Write":
+                tools.append({
+                    "type": "function",
+                    "function": {
+                        "name": "Write",
+                        "description": "Create/Overwrite file",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "file_path": {"type": "string"},
+                                "content": {"type": "string"}
+                            },
+                            "required": ["file_path", "content"]
+                        }
+                    }
+                })
+            elif name == "Edit":
+                tools.append({
+                    "type": "function",
+                    "function": {
+                        "name": "Edit",
+                        "description": "Edit file content",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "file_path": {"type": "string"},
+                                "target_content": {"type": "string"},
+                                "replacement_content": {"type": "string"}
+                            },
+                            "required": ["file_path", "target_content", "replacement_content"]
+                        }
+                    }
+                })
+            elif name == "Glob":
+                tools.append({
+                    "type": "function",
+                    "function": {
+                        "name": "Glob",
+                        "description": "List files",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "pattern": {"type": "string"}
+                            },
+                            "required": ["pattern"]
+                        }
+                    }
+                })
+            elif name == "Grep":
+                tools.append({
+                    "type": "function",
+                    "function": {
+                        "name": "Grep",
+                        "description": "Search in files",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "query": {"type": "string"},
+                                "pattern": {"type": "string"}
+                            },
+                            "required": ["query"]
+                        }
+                    }
+                })
+            elif name == "Bash":
+                tools.append({
+                    "type": "function",
+                    "function": {
+                        "name": "Bash",
+                        "description": "Run bash command",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "command": {"type": "string"}
+                            },
+                            "required": ["command"]
+                        }
+                    }
+                })
+        return tools
+
+    async def cleanup(self) -> None:
+        if hasattr(self, 'client'):
+            await self.client.close()
