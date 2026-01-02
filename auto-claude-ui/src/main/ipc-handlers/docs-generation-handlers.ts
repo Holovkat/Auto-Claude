@@ -48,7 +48,6 @@ function loadSettings(): AppSettings {
  */
 function getCliCommand(settings: AppSettings): { command: string; args: string[]; useFileInput: boolean } {
   const provider = settings.activeProvider || 'claude';
-  const model = settings.providerModel || 'claude-sonnet-4-20250514';
   
   switch (provider) {
     case 'claude':
@@ -57,9 +56,10 @@ function getCliCommand(settings: AppSettings): { command: string; args: string[]
     case 'custom':
     case 'droid': {
       // For droid exec, use -f for file input and --auto high for full permissions
+      // Don't pass --model, let droid use its configured default
       return { 
         command: 'droid', 
-        args: ['exec', '--model', model, '--auto', 'high', '-f'],
+        args: ['exec', '--auto', 'high', '-f'],
         useFileInput: true 
       };
     }
