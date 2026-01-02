@@ -291,5 +291,14 @@ export const IPC_CHANNELS = {
   RELEASE_GET_VERSIONS: 'release:getVersions',
 
   // Release events (main -> renderer)
-  RELEASE_PROGRESS: 'release:progress'
+  RELEASE_PROGRESS: 'release:progress',
+
+  // Documentation generation operations
+  DOCS_GENERATE: 'docs:generate',
+  DOCS_GET_CHANGES: 'docs:getChanges',
+
+  // Documentation generation events (main -> renderer)
+  DOCS_GENERATION_PROGRESS: 'docs:generationProgress',
+  DOCS_GENERATION_COMPLETE: 'docs:generationComplete',
+  DOCS_GENERATION_ERROR: 'docs:generationError'
 } as const;

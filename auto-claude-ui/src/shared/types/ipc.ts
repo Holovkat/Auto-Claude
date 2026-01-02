@@ -21,7 +21,9 @@ import type {
   GraphitiConnectionTestResult,
   GitStatus,
   KBAMemoryStatus,
-  KBAMemoryNote
+  KBAMemoryNote,
+  DocsGenerationResult,
+  DocsChangesResult
 } from './project';
 import type {
   Task,
@@ -280,6 +282,10 @@ export interface ElectronAPI {
   addKBANote: (projectId: string, title: string, content: string, tags?: string[]) => Promise<IPCResult<KBAMemoryNote>>;
   updateKBANote: (projectId: string, noteId: string, updates: { title?: string; content?: string; tags?: string[] }) => Promise<IPCResult<KBAMemoryNote>>;
   deleteKBANote: (projectId: string, noteId: string) => Promise<IPCResult>;
+
+  // Documentation generation operations
+  generateDocs: (projectId: string) => Promise<IPCResult<DocsGenerationResult>>;
+  getDocsChanges: (projectId: string) => Promise<IPCResult<DocsChangesResult>>;
 
   // Environment configuration operations
   getProjectEnv: (projectId: string) => Promise<IPCResult<ProjectEnvConfig>>;

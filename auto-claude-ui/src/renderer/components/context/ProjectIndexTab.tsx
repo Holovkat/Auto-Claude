@@ -1,4 +1,4 @@
-import { RefreshCw, AlertCircle, FolderTree } from 'lucide-react';
+import { RefreshCw, AlertCircle, FolderTree, Sparkles, CheckCircle } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
@@ -14,13 +14,19 @@ interface ProjectIndexTabProps {
   indexLoading: boolean;
   indexError: string | null;
   onRefresh: () => void;
+  onGenerateDocs?: () => void;
+  docsGenerating?: boolean;
+  docsMessage?: string | null;
 }
 
 export function ProjectIndexTab({
   projectIndex,
   indexLoading,
   indexError,
-  onRefresh
+  onRefresh,
+  onGenerateDocs,
+  docsGenerating = false,
+  docsMessage
 }: ProjectIndexTabProps) {
   return (
     <ScrollArea className="h-full">
@@ -33,21 +39,60 @@ export function ProjectIndexTab({
               AI-discovered knowledge about your codebase
             </p>
           </div>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onRefresh}
-                disabled={indexLoading}
-              >
-                <RefreshCw className={cn('h-4 w-4 mr-2', indexLoading && 'animate-spin')} />
-                Refresh
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Re-analyze project structure</TooltipContent>
-          </Tooltip>
+          <div className="flex items-center gap-2">
+            {onGenerateDocs && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onGenerateDocs}
+                    disabled={docsGenerating || indexLoading}
+                  >
+                    {docsGenerating ? (
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-4 w-4 mr-2" />
+                    )}
+                    Generate Docs
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Generate AGENTS.md and README files using AI</TooltipContent>
+              </Tooltip>
+            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onRefresh}
+                  disabled={indexLoading}
+                >
+                  <RefreshCw className={cn('h-4 w-4 mr-2', indexLoading && 'animate-spin')} />
+                  Refresh
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Re-analyze project structure</TooltipContent>
+            </Tooltip>
+          </div>
         </div>
+
+        {/* Docs generation message */}
+        {docsMessage && (
+          <div className={cn(
+            "flex items-center gap-3 p-4 rounded-lg",
+            docsMessage.startsWith('Error:') 
+              ? "bg-destructive/10 text-destructive"
+              : "bg-success/10 text-success"
+          )}>
+            {docsMessage.startsWith('Error:') ? (
+              <AlertCircle className="h-5 w-5 shrink-0" />
+            ) : (
+              <CheckCircle className="h-5 w-5 shrink-0" />
+            )}
+            <p className="text-sm">{docsMessage}</p>
+          </div>
+        )}
 
         {/* Error state */}
         {indexError && (

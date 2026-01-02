@@ -26,3 +26,6 @@ export * from './github';
 
 // Configuration and paths
 export * from './config';
+
+// Documentation generation
+export * from './docs-generation';

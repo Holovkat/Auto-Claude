@@ -364,3 +364,16 @@ export interface FileNode {
   name: string;
   isDirectory: boolean;
 }
+
+// Documentation Generation Types
+export interface DocsGenerationResult {
+  success: boolean;
+  filesCreated: string[];
+  filesModified: string[];
+  summary: string;
+}
+
+export interface DocsChangesResult {
+  filesCreated: string[];
+  filesModified: string[];
+}

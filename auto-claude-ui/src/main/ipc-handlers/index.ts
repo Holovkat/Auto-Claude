@@ -29,6 +29,7 @@ import { registerInsightsHandlers } from './insights-handlers';
 import { registerDockerHandlers } from './docker-handlers';
 import { registerAppUpdateHandlers } from './app-update-handlers';
 import { registerKBAMemoryHandlers } from './kba-memory-handlers';
+import { registerDocsGenerationHandlers } from './docs-generation-handlers';
 import { notificationService } from '../notification-service';
 
 /**
@@ -99,6 +100,9 @@ export function setupIpcHandlers(
   // KBA Memory handlers
   registerKBAMemoryHandlers(getMainWindow);
 
+  // Documentation generation handlers
+  registerDocsGenerationHandlers(getMainWindow);
+
   // App auto-update handlers
   registerAppUpdateHandlers();
 
@@ -124,5 +128,6 @@ export {
   registerInsightsHandlers,
   registerDockerHandlers,
   registerAppUpdateHandlers,
-  registerKBAMemoryHandlers
+  registerKBAMemoryHandlers,
+  registerDocsGenerationHandlers
 };
