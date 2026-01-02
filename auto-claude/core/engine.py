@@ -925,6 +925,9 @@ class CustomCliAgentEngine(BaseAgentEngine):
         args = shlex.split(cmd_str)
         is_streaming = "stream-json" in template
         
+        # Override cwd if specified in env
+        cwd = os.environ.get("AUTO_CLAUDE_CUSTOM_CLI_WORKDIR") or self.options.cwd
+        
         try:
             if not is_streaming:
                 args.append(self.prompt)
@@ -934,7 +937,7 @@ class CustomCliAgentEngine(BaseAgentEngine):
                 stdin=asyncio.subprocess.PIPE if is_streaming else None,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                cwd=self.options.cwd
+                cwd=cwd
             )
             
             if is_streaming:

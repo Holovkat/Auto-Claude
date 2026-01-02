@@ -220,9 +220,21 @@ export function getProfileEnv(profileId?: string): Record<string, string> {
   }
 
   // Add Custom CLI token if configured
-  if (globalSettings.activeProvider === 'custom' && globalSettings.customCliTokenEnvName && globalSettings.customCliTokenValue) {
-    env[globalSettings.customCliTokenEnvName] = globalSettings.customCliTokenValue;
-    console.warn(`[getProfileEnv] Added custom CLI token to env: ${globalSettings.customCliTokenEnvName}`);
+  if (globalSettings.activeProvider === 'custom') {
+    if (globalSettings.customCliTokenEnvName && globalSettings.customCliTokenValue) {
+      env[globalSettings.customCliTokenEnvName] = globalSettings.customCliTokenValue;
+      console.warn(`[getProfileEnv] Added custom CLI token to env: ${globalSettings.customCliTokenEnvName}`);
+    }
+    
+    if (globalSettings.customCliTemplate) {
+      env.AUTO_CLAUDE_CUSTOM_CLI_TEMPLATE = globalSettings.customCliTemplate;
+      console.warn('[getProfileEnv] Added custom CLI template to env');
+    }
+    
+    if (globalSettings.customCliWorkDir) {
+      env.AUTO_CLAUDE_CUSTOM_CLI_WORKDIR = globalSettings.customCliWorkDir;
+      console.warn('[getProfileEnv] Added custom CLI workdir to env:', globalSettings.customCliWorkDir);
+    }
   }
 
   // If profile exists, handle Claude auth
