@@ -923,10 +923,15 @@ class CustomCliAgentEngine(BaseAgentEngine):
         args = shlex.split(cmd_str)
         is_streaming = "stream-json" in template
         
+        # Log the command being executed for debugging
+        print(f"\n[CustomCliEngine] Executing: {cmd_str}")
+        
         # Override cwd if specified in env
         cwd = os.environ.get("AUTO_CLAUDE_CUSTOM_CLI_WORKDIR") or self.options.cwd
         
         try:
+            yield AssistantMessage(f"> [Custom CLI] Executing: {cmd_str}\n")
+            
             if not is_streaming:
                 args.append(self.prompt)
                 
