@@ -731,7 +731,17 @@ export function IntegrationSettings({ settings, onSettingsChange, isOpen }: Inte
                 id="activeProvider"
                 className="w-full max-w-md px-3 py-2 bg-background border border-input rounded-md text-sm"
                 value={settings.activeProvider || 'claude'}
-                onChange={(e) => onSettingsChange({ ...settings, activeProvider: e.target.value as any })}
+                onChange={(e) => {
+                  const newProvider = e.target.value as any;
+                  const updates: Partial<AppSettings> = { activeProvider: newProvider };
+                  
+                  // Auto-suggest Droid model if switching to custom
+                  if (newProvider === 'custom' && !settings.providerModel) {
+                    updates.providerModel = 'custom:GLM-4.7-[Z.AI-Coding-Plan]-7';
+                  }
+                  
+                  onSettingsChange({ ...settings, ...updates });
+                }}
               >
                 <option value="claude">Claude SDK (Official)</option>
                 <option value="openai">OpenAI / Compatible API</option>
