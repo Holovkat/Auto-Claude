@@ -895,14 +895,6 @@ class CustomCliAgentEngine(BaseAgentEngine):
         pass
 
     async def receive_response(self) -> AsyncIterator[Any]:
-        @dataclass
-        class TextBlock:
-            text: str
-
-        class AssistantMessage:
-            def __init__(self, text: str):
-                self.content = [TextBlock(text=text)]
-
         # Get template from env or default to droid exec with stream-json
         template = os.environ.get("AUTO_CLAUDE_CUSTOM_CLI_TEMPLATE", 
             "droid exec --model {model} --output-format stream-json --input-format stream-json --auto low"
