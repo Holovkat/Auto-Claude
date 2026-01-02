@@ -65,25 +65,29 @@ export function registerAgenteventsHandlers(
       fileWatcher.unwatch(taskId);
 
       // Determine new status based on process type and exit code
-      // Flow: Planning → In Progress → AI Review (QA agent) → Human Review (QA passed)
-      let newStatus: TaskStatus;
+      let newStatus: TaskStatus | null = null;
 
-      if (processType === 'task-execution') {
-        // Task execution completed (includes spec_runner → run.py chain)
-        // Success (code 0) = QA agent signed off → Human Review
-        // Failure = needs human attention → Human Review
-        newStatus = 'human_review';
-      } else if (processType === 'qa-process') {
-        // QA retry process completed
-        newStatus = 'human_review';
+      if (processType === 'task-execution' || processType === 'qa-process') {
+        // If process succeeded, it's definitely ready for human review
+        if (code === 0) {
+          newStatus = 'human_review';
+        } else {
+          // If it failed, we should check the implementation plan to see how far it got
+          // If the plan exists and is marked as complete, we can still move to human review
+          // Otherwise, we keep it in the current status (which will appear as 'Stuck')
+          newStatus = null; 
+        }
       } else if (processType === 'spec-creation') {
-        // Pure spec creation (shouldn't happen with current flow, but handle it)
         // Stay in backlog/planning
         console.warn(`[Task ${taskId}] Spec creation completed with code ${code}`);
         return;
-      } else {
-        // Unknown process type
-        newStatus = 'human_review';
+      }
+
+      // If newStatus is null, we don't want to force a transition
+      // This allows the 'Stuck' detection to work correctly in the UI
+      if (newStatus === null) {
+        console.warn(`[Task ${taskId}] Process exited with code ${code}. Keeping current status.`);
+        return;
       }
 
       // Find task and project for status persistence and notifications
