@@ -984,10 +984,28 @@ class CustomCliAgentEngine(BaseAgentEngine):
                             if "session_id" in data:
                                 self._save_session_id(data["session_id"])
                             
-                            # Surface content/message/text
-                            content = data.get("content") or data.get("message") or data.get("text")
-                            if content:
-                                yield AssistantMessage(content)
+                            msg_type = data.get("type", "")
+                            
+                            # Handle Droid CLI stream-json format
+                            if msg_type == "message" and data.get("role") == "assistant":
+                                text = data.get("text", "")
+                                if text:
+                                    yield AssistantMessage(text)
+                            elif msg_type == "tool_call":
+                                tool_name = data.get("toolName", "unknown")
+                                yield AssistantMessage(f"\n[Tool Call: {tool_name}]")
+                            elif msg_type == "tool_result":
+                                value = data.get("value", "")
+                                if value and len(value) < 500:
+                                    yield AssistantMessage(f"\n[Tool Result]: {value[:200]}...")
+                            elif msg_type == "system":
+                                # Init message - just log session_id
+                                pass
+                            else:
+                                # Fallback: surface content/message/text
+                                content = data.get("content") or data.get("message") or data.get("text")
+                                if content:
+                                    yield AssistantMessage(content)
                         else:
                             yield AssistantMessage(line_str)
                     except json.JSONDecodeError:
