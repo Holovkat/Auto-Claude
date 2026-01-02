@@ -68,11 +68,16 @@ function buildCliCommand(settings: AppSettings, promptFile: string, projectPath:
     .replace('--output-format stream-json', '') // Remove streaming for this use case
     .trim();
   
-  // Add -f flag for file input
-  template = template + ' -f ' + promptFile;
+  // Insert -f flag right after 'exec' (droid requires it there)
+  template = template.replace('exec ', `exec -f "${promptFile}" `);
   
-  // Parse the command string into parts
-  const parts = template.split(/\s+/).filter(Boolean);
+  // Parse the command string into parts (handle quoted paths)
+  const parts: string[] = [];
+  const regex = /"([^"]+)"|(\S+)/g;
+  let match;
+  while ((match = regex.exec(template)) !== null) {
+    parts.push(match[1] || match[2]);
+  }
   
   console.log('[Docs Generation] Provider:', provider);
   console.log('[Docs Generation] Command:', parts.join(' '));
