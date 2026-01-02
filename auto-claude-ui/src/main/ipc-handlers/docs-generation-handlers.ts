@@ -3,13 +3,14 @@
  * Handles AGENTS.md and README generation via AI agents
  */
 
-import { ipcMain, app } from 'electron';
+import { ipcMain } from 'electron';
 import type { BrowserWindow } from 'electron';
 import { spawn } from 'child_process';
 import { existsSync, readFileSync, writeFileSync, unlinkSync, mkdirSync } from 'fs';
 import path from 'path';
-import { IPC_CHANNELS, AGENTS_MD_PROMPT, DOCS_GENERATION_SUMMARY_TAGS, DEFAULT_APP_SETTINGS } from '../../shared/constants';
-import type { IPCResult, AppSettings } from '../../shared/types';
+import os from 'os';
+import { IPC_CHANNELS, AGENTS_MD_PROMPT, DOCS_GENERATION_SUMMARY_TAGS } from '../../shared/constants';
+import type { IPCResult } from '../../shared/types';
 import { projectStore } from '../project-store';
 
 interface DocsGenerationResult {
@@ -26,53 +27,57 @@ interface GitDiffResult {
 
 const DEFAULT_KBA_URL = 'http://localhost:3002';
 
+interface FactorySettings {
+  cliTemplate?: string;
+  defaultModel?: string;
+}
+
 /**
- * Load app settings
+ * Load Factory CLI settings from ~/.factory/settings.json
+ * This is the same settings file used by the Python backend
  */
-function loadSettings(): AppSettings {
-  const settingsPath = path.join(app.getPath('userData'), 'settings.json');
+function loadFactorySettings(): FactorySettings {
+  const settingsPath = path.join(os.homedir(), '.factory', 'settings.json');
   try {
     if (existsSync(settingsPath)) {
       const content = readFileSync(settingsPath, 'utf-8');
-      return { ...DEFAULT_APP_SETTINGS, ...JSON.parse(content) };
+      return JSON.parse(content);
     }
   } catch {
     // Return defaults on error
   }
-  return DEFAULT_APP_SETTINGS;
+  return {};
 }
 
 /**
- * Get CLI command based on provider settings
- * Returns: { command, args, useFileInput } where useFileInput means use -f flag instead of stdin pipe
+ * Build CLI command from Factory settings template
+ * Mirrors the logic in auto-claude/core/engine.py CustomCliAgentEngine._build_command()
  */
-function getCliCommand(settings: AppSettings): { command: string; args: string[]; useFileInput: boolean } {
-  const provider = settings.activeProvider || 'claude';
+function buildCliCommand(promptFile: string): { command: string; args: string[] } {
+  const settings = loadFactorySettings();
   
-  switch (provider) {
-    case 'claude':
-      return { command: 'claude', args: ['--print'], useFileInput: false };
-    
-    case 'custom':
-    case 'droid': {
-      // For droid exec, use -f for file input and --auto high for full permissions
-      // Don't pass --model, let droid use its configured default
-      return { 
-        command: 'droid', 
-        args: ['exec', '--auto', 'high', '-f'],
-        useFileInput: true 
-      };
-    }
-    
-    case 'gemini':
-      return { command: 'gemini', args: ['--print'], useFileInput: false };
-    
-    case 'openai':
-      return { command: 'openai', args: ['--print'], useFileInput: false };
-    
-    default:
-      return { command: 'claude', args: ['--print'], useFileInput: false };
-  }
+  // Get CLI template from settings or use default
+  let cliTemplate = settings.cliTemplate || 'droid exec --model {model} --output-format stream-json --auto high';
+  
+  // Replace template variables
+  const model = settings.defaultModel || 'claude-opus-4-5-20251101';
+  cliTemplate = cliTemplate.replace('{model}', model);
+  
+  // Remove --output-format stream-json for non-streaming mode
+  cliTemplate = cliTemplate.replace('--output-format stream-json', '').trim();
+  
+  // Add -f flag for file input
+  cliTemplate = cliTemplate + ' -f ' + promptFile;
+  
+  // Parse the command string into parts
+  const parts = cliTemplate.split(/\s+/).filter(Boolean);
+  
+  console.log('[Docs Generation] Built command from Factory settings:', parts.join(' '));
+  
+  return {
+    command: parts[0],
+    args: parts.slice(1)
+  };
 }
 
 /**
@@ -235,10 +240,6 @@ export function registerDocsGenerationHandlers(
           });
         }
 
-        // Get CLI command based on provider settings
-        const settings = loadSettings();
-        const { command, args, useFileInput } = getCliCommand(settings);
-
         // Write prompt to temp file
         const promptDir = path.join(project.path, '.auto-claude');
         const promptFile = path.join(promptDir, '.docs-prompt.md');
@@ -248,31 +249,12 @@ export function registerDocsGenerationHandlers(
         }
         writeFileSync(promptFile, AGENTS_MD_PROMPT, 'utf-8');
 
-        console.log('[Docs Generation] Using provider:', settings.activeProvider || 'claude');
-        console.log('[Docs Generation] Command:', command, args.join(' '));
+        // Build CLI command from Factory settings (same as Python backend)
+        const { command, args } = buildCliCommand(promptFile);
 
-        // Build spawn args based on provider type
-        let spawnCommand: string;
-        let spawnArgs: string[];
-        
-        if (useFileInput) {
-          // For droid: use -f flag directly with file path
-          spawnCommand = command;
-          spawnArgs = [...args, promptFile];
-        } else {
-          // For claude/gemini/openai: pipe via cat
-          spawnCommand = 'sh';
-          spawnArgs = ['-c', `cat "${promptFile}" | ${command} ${args.join(' ')}`];
-        }
-
-        console.log('[Docs Generation] Spawning:', spawnCommand, spawnArgs.join(' '));
-
-        const agentProcess = spawn(spawnCommand, spawnArgs, {
+        const agentProcess = spawn(command, args, {
           cwd: project.path,
-          env: {
-            ...process.env,
-            ANTHROPIC_MODEL: settings.providerModel || 'claude-sonnet-4-20250514'
-          }
+          env: process.env
         });
 
         let stdout = '';
