@@ -11,7 +11,10 @@ import type {
   InfrastructureStatus,
   GraphitiValidationResult,
   GraphitiConnectionTestResult,
-  GitStatus
+  GitStatus,
+  KBAMemoryStatus,
+  KBAMemoryNote,
+  ContextSearchResult
 } from '../../shared/types';
 
 export interface ProjectAPI {
@@ -33,6 +36,14 @@ export interface ProjectAPI {
   getMemoryStatus: (projectId: string) => Promise<IPCResult<unknown>>;
   searchMemories: (projectId: string, query: string) => Promise<IPCResult<unknown>>;
   getRecentMemories: (projectId: string, limit?: number) => Promise<IPCResult<unknown>>;
+
+  // KBA Memory Operations
+  getKBAStatus: (projectId: string) => Promise<IPCResult<KBAMemoryStatus>>;
+  getKBANotes: (projectId: string, limit?: number) => Promise<IPCResult<KBAMemoryNote[]>>;
+  searchKBANotes: (projectId: string, query: string) => Promise<IPCResult<ContextSearchResult[]>>;
+  addKBANote: (projectId: string, title: string, content: string, tags?: string[]) => Promise<IPCResult<KBAMemoryNote>>;
+  updateKBANote: (projectId: string, noteId: string, updates: { title?: string; content?: string; tags?: string[] }) => Promise<IPCResult<KBAMemoryNote>>;
+  deleteKBANote: (projectId: string, noteId: string) => Promise<IPCResult>;
 
   // Environment Configuration
   getProjectEnv: (projectId: string) => Promise<IPCResult<ProjectEnvConfig>>;
@@ -113,6 +124,25 @@ export const createProjectAPI = (): ProjectAPI => ({
 
   getRecentMemories: (projectId: string, limit?: number) =>
     ipcRenderer.invoke(IPC_CHANNELS.CONTEXT_GET_MEMORIES, projectId, limit),
+
+  // KBA Memory Operations
+  getKBAStatus: (projectId: string): Promise<IPCResult<KBAMemoryStatus>> =>
+    ipcRenderer.invoke(IPC_CHANNELS.KBA_GET_STATUS, projectId),
+
+  getKBANotes: (projectId: string, limit?: number): Promise<IPCResult<KBAMemoryNote[]>> =>
+    ipcRenderer.invoke(IPC_CHANNELS.KBA_GET_NOTES, projectId, limit),
+
+  searchKBANotes: (projectId: string, query: string): Promise<IPCResult<ContextSearchResult[]>> =>
+    ipcRenderer.invoke(IPC_CHANNELS.KBA_SEARCH_NOTES, projectId, query),
+
+  addKBANote: (projectId: string, title: string, content: string, tags?: string[]): Promise<IPCResult<KBAMemoryNote>> =>
+    ipcRenderer.invoke(IPC_CHANNELS.KBA_ADD_NOTE, projectId, title, content, tags),
+
+  updateKBANote: (projectId: string, noteId: string, updates: { title?: string; content?: string; tags?: string[] }): Promise<IPCResult<KBAMemoryNote>> =>
+    ipcRenderer.invoke(IPC_CHANNELS.KBA_UPDATE_NOTE, projectId, noteId, updates),
+
+  deleteKBANote: (projectId: string, noteId: string): Promise<IPCResult> =>
+    ipcRenderer.invoke(IPC_CHANNELS.KBA_DELETE_NOTE, projectId, noteId),
 
   // Environment Configuration
   getProjectEnv: (projectId: string): Promise<IPCResult<ProjectEnvConfig>> =>

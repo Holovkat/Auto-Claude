@@ -247,11 +247,49 @@ export interface ContextSearchResult {
   type: string;
 }
 
+// KBA Memory Types (Qdrant-based vector memory)
+export interface KBAMemoryStatus {
+  available: boolean;
+  serverUrl: string;
+  collectionId?: string;
+  collectionName?: string;
+  noteCount?: number;
+  reason?: string;
+}
+
+export interface KBAMemoryNote {
+  id: string;
+  title: string;
+  content: string;
+  tags: string[];
+  collectionId: string;
+  createdAt: string;
+  updatedAt: string;
+  score?: number; // For search results
+}
+
+// Unified memory status that works for all backends
+export interface UnifiedMemoryStatus {
+  backend: 'graphiti' | 'kba-memory' | 'file';
+  available: boolean;
+  reason?: string;
+  // Graphiti-specific
+  graphiti?: GraphitiMemoryStatus;
+  graphitiState?: GraphitiMemoryState;
+  // KBA Memory-specific
+  kba?: KBAMemoryStatus;
+}
+
 export interface ProjectContextData {
   projectIndex: ProjectIndex | null;
   memoryStatus: GraphitiMemoryStatus | null;
   memoryState: GraphitiMemoryState | null;
   recentMemories: MemoryEpisode[];
+  // KBA Memory data
+  kbaStatus: KBAMemoryStatus | null;
+  kbaNotes: KBAMemoryNote[];
+  // Unified status
+  unifiedMemoryStatus: UnifiedMemoryStatus | null;
   isLoading: boolean;
   error?: string;
 }

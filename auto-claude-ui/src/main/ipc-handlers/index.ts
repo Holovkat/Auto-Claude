@@ -28,6 +28,7 @@ import { registerChangelogHandlers } from './changelog-handlers';
 import { registerInsightsHandlers } from './insights-handlers';
 import { registerDockerHandlers } from './docker-handlers';
 import { registerAppUpdateHandlers } from './app-update-handlers';
+import { registerKBAMemoryHandlers } from './kba-memory-handlers';
 import { notificationService } from '../notification-service';
 
 /**
@@ -95,6 +96,9 @@ export function setupIpcHandlers(
   // Docker & infrastructure handlers (for Graphiti/FalkorDB)
   registerDockerHandlers();
 
+  // KBA Memory handlers
+  registerKBAMemoryHandlers(getMainWindow);
+
   // App auto-update handlers
   registerAppUpdateHandlers();
 
@@ -119,5 +123,6 @@ export {
   registerChangelogHandlers,
   registerInsightsHandlers,
   registerDockerHandlers,
-  registerAppUpdateHandlers
+  registerAppUpdateHandlers,
+  registerKBAMemoryHandlers
 };

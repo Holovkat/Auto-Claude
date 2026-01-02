@@ -4,8 +4,12 @@ import type {
   GraphitiMemoryStatus,
   GraphitiMemoryState,
   MemoryEpisode,
-  ContextSearchResult
+  ContextSearchResult,
+  KBAMemoryStatus,
+  KBAMemoryNote
 } from '../../shared/types';
+
+type MemoryBackend = 'graphiti' | 'kba-memory' | 'file';
 
 interface ContextState {
   // Project Index
@@ -13,13 +17,21 @@ interface ContextState {
   indexLoading: boolean;
   indexError: string | null;
 
-  // Memory Status
+  // Memory Backend
+  memoryBackend: MemoryBackend;
+
+  // Graphiti Memory Status
   memoryStatus: GraphitiMemoryStatus | null;
   memoryState: GraphitiMemoryState | null;
   memoryLoading: boolean;
   memoryError: string | null;
 
-  // Recent Memories
+  // KBA Memory Status
+  kbaStatus: KBAMemoryStatus | null;
+  kbaNotes: KBAMemoryNote[];
+  kbaLoading: boolean;
+
+  // Recent Memories (Graphiti/File)
   recentMemories: MemoryEpisode[];
   memoriesLoading: boolean;
 
@@ -32,15 +44,22 @@ interface ContextState {
   setProjectIndex: (index: ProjectIndex | null) => void;
   setIndexLoading: (loading: boolean) => void;
   setIndexError: (error: string | null) => void;
+  setMemoryBackend: (backend: MemoryBackend) => void;
   setMemoryStatus: (status: GraphitiMemoryStatus | null) => void;
   setMemoryState: (state: GraphitiMemoryState | null) => void;
   setMemoryLoading: (loading: boolean) => void;
   setMemoryError: (error: string | null) => void;
+  setKBAStatus: (status: KBAMemoryStatus | null) => void;
+  setKBANotes: (notes: KBAMemoryNote[]) => void;
+  setKBALoading: (loading: boolean) => void;
   setRecentMemories: (memories: MemoryEpisode[]) => void;
   setMemoriesLoading: (loading: boolean) => void;
   setSearchResults: (results: ContextSearchResult[]) => void;
   setSearchLoading: (loading: boolean) => void;
   setSearchQuery: (query: string) => void;
+  addKBANote: (note: KBAMemoryNote) => void;
+  updateKBANote: (noteId: string, updates: Partial<KBAMemoryNote>) => void;
+  removeKBANote: (noteId: string) => void;
   clearAll: () => void;
 }
 
@@ -50,13 +69,21 @@ export const useContextStore = create<ContextState>((set) => ({
   indexLoading: false,
   indexError: null,
 
-  // Memory Status
+  // Memory Backend
+  memoryBackend: 'kba-memory',
+
+  // Graphiti Memory Status
   memoryStatus: null,
   memoryState: null,
   memoryLoading: false,
   memoryError: null,
 
-  // Recent Memories
+  // KBA Memory Status
+  kbaStatus: null,
+  kbaNotes: [],
+  kbaLoading: false,
+
+  // Recent Memories (Graphiti/File)
   recentMemories: [],
   memoriesLoading: false,
 
@@ -69,24 +96,39 @@ export const useContextStore = create<ContextState>((set) => ({
   setProjectIndex: (index) => set({ projectIndex: index }),
   setIndexLoading: (loading) => set({ indexLoading: loading }),
   setIndexError: (error) => set({ indexError: error }),
+  setMemoryBackend: (backend) => set({ memoryBackend: backend }),
   setMemoryStatus: (status) => set({ memoryStatus: status }),
   setMemoryState: (state) => set({ memoryState: state }),
   setMemoryLoading: (loading) => set({ memoryLoading: loading }),
   setMemoryError: (error) => set({ memoryError: error }),
+  setKBAStatus: (status) => set({ kbaStatus: status }),
+  setKBANotes: (notes) => set({ kbaNotes: notes }),
+  setKBALoading: (loading) => set({ kbaLoading: loading }),
   setRecentMemories: (memories) => set({ recentMemories: memories }),
   setMemoriesLoading: (loading) => set({ memoriesLoading: loading }),
   setSearchResults: (results) => set({ searchResults: results }),
   setSearchLoading: (loading) => set({ searchLoading: loading }),
   setSearchQuery: (query) => set({ searchQuery: query }),
+  addKBANote: (note) => set((state) => ({ kbaNotes: [note, ...state.kbaNotes] })),
+  updateKBANote: (noteId, updates) => set((state) => ({
+    kbaNotes: state.kbaNotes.map((n) => n.id === noteId ? { ...n, ...updates } : n)
+  })),
+  removeKBANote: (noteId) => set((state) => ({
+    kbaNotes: state.kbaNotes.filter((n) => n.id !== noteId)
+  })),
   clearAll: () =>
     set({
       projectIndex: null,
       indexLoading: false,
       indexError: null,
+      memoryBackend: 'kba-memory',
       memoryStatus: null,
       memoryState: null,
       memoryLoading: false,
       memoryError: null,
+      kbaStatus: null,
+      kbaNotes: [],
+      kbaLoading: false,
       recentMemories: [],
       memoriesLoading: false,
       searchResults: [],
@@ -195,5 +237,109 @@ export async function loadRecentMemories(
     // Silently fail - memories are optional
   } finally {
     store.setMemoriesLoading(false);
+  }
+}
+
+/**
+ * Load KBA memory status and notes
+ */
+export async function loadKBAMemory(
+  projectId: string,
+  limit: number = 20
+): Promise<void> {
+  const store = useContextStore.getState();
+  store.setKBALoading(true);
+
+  try {
+    // Load status
+    const statusResult = await window.electronAPI.getKBAStatus(projectId);
+    if (statusResult.success && statusResult.data) {
+      store.setKBAStatus(statusResult.data);
+    }
+
+    // Load notes
+    const notesResult = await window.electronAPI.getKBANotes(projectId, limit);
+    if (notesResult.success && notesResult.data) {
+      store.setKBANotes(notesResult.data);
+    }
+  } catch (_error) {
+    // Silently fail - KBA memory is optional
+  } finally {
+    store.setKBALoading(false);
+  }
+}
+
+/**
+ * Search KBA notes
+ */
+export async function searchKBANotes(
+  projectId: string,
+  query: string
+): Promise<void> {
+  const store = useContextStore.getState();
+  store.setSearchQuery(query);
+
+  if (!query.trim()) {
+    store.setSearchResults([]);
+    return;
+  }
+
+  store.setSearchLoading(true);
+
+  try {
+    const result = await window.electronAPI.searchKBANotes(projectId, query);
+    if (result.success && result.data) {
+      store.setSearchResults(result.data);
+    } else {
+      store.setSearchResults([]);
+    }
+  } catch (_error) {
+    store.setSearchResults([]);
+  } finally {
+    store.setSearchLoading(false);
+  }
+}
+
+/**
+ * Add a new KBA note
+ */
+export async function addKBANote(
+  projectId: string,
+  title: string,
+  content: string,
+  tags: string[] = []
+): Promise<boolean> {
+  const store = useContextStore.getState();
+
+  try {
+    const result = await window.electronAPI.addKBANote(projectId, title, content, tags);
+    if (result.success && result.data) {
+      store.addKBANote(result.data);
+      return true;
+    }
+    return false;
+  } catch (_error) {
+    return false;
+  }
+}
+
+/**
+ * Delete a KBA note
+ */
+export async function deleteKBANote(
+  projectId: string,
+  noteId: string
+): Promise<boolean> {
+  const store = useContextStore.getState();
+
+  try {
+    const result = await window.electronAPI.deleteKBANote(projectId, noteId);
+    if (result.success) {
+      store.removeKBANote(noteId);
+      return true;
+    }
+    return false;
+  } catch (_error) {
+    return false;
   }
 }

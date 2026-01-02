@@ -19,7 +19,9 @@ import type {
   InfrastructureStatus,
   GraphitiValidationResult,
   GraphitiConnectionTestResult,
-  GitStatus
+  GitStatus,
+  KBAMemoryStatus,
+  KBAMemoryNote
 } from './project';
 import type {
   Task,
@@ -270,6 +272,14 @@ export interface ElectronAPI {
   getMemoryStatus: (projectId: string) => Promise<IPCResult<GraphitiMemoryStatus>>;
   searchMemories: (projectId: string, query: string) => Promise<IPCResult<ContextSearchResult[]>>;
   getRecentMemories: (projectId: string, limit?: number) => Promise<IPCResult<MemoryEpisode[]>>;
+
+  // KBA Memory operations
+  getKBAStatus: (projectId: string) => Promise<IPCResult<KBAMemoryStatus>>;
+  getKBANotes: (projectId: string, limit?: number) => Promise<IPCResult<KBAMemoryNote[]>>;
+  searchKBANotes: (projectId: string, query: string) => Promise<IPCResult<ContextSearchResult[]>>;
+  addKBANote: (projectId: string, title: string, content: string, tags?: string[]) => Promise<IPCResult<KBAMemoryNote>>;
+  updateKBANote: (projectId: string, noteId: string, updates: { title?: string; content?: string; tags?: string[] }) => Promise<IPCResult<KBAMemoryNote>>;
+  deleteKBANote: (projectId: string, noteId: string) => Promise<IPCResult>;
 
   // Environment configuration operations
   getProjectEnv: (projectId: string) => Promise<IPCResult<ProjectEnvConfig>>;

@@ -137,6 +137,14 @@ export const IPC_CHANNELS = {
   CONTEXT_SEARCH_MEMORIES: 'context:searchMemories',
   CONTEXT_GET_MEMORIES: 'context:getMemories',
 
+  // KBA Memory operations
+  KBA_GET_STATUS: 'kba:getStatus',
+  KBA_GET_NOTES: 'kba:getNotes',
+  KBA_SEARCH_NOTES: 'kba:searchNotes',
+  KBA_ADD_NOTE: 'kba:addNote',
+  KBA_UPDATE_NOTE: 'kba:updateNote',
+  KBA_DELETE_NOTE: 'kba:deleteNote',
+
   // Environment configuration
   ENV_GET: 'env:get',
   ENV_UPDATE: 'env:update',

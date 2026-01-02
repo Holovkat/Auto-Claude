@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { FolderTree, Brain } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { useContextStore } from '../../stores/context-store';
+import { useContextStore, loadKBAMemory, searchKBANotes, addKBANote, deleteKBANote } from '../../stores/context-store';
 import { useProjectContext, useRefreshIndex, useMemorySearch } from './hooks';
 import { ProjectIndexTab } from './ProjectIndexTab';
 import { MemoriesTab } from './MemoriesTab';
+import { KBANotesTab } from './KBANotesTab';
 import type { ContextProps } from './types';
 
 export function Context({ projectId }: ContextProps) {
@@ -12,10 +13,14 @@ export function Context({ projectId }: ContextProps) {
     projectIndex,
     indexLoading,
     indexError,
+    memoryBackend,
     memoryStatus,
     memoryState,
     recentMemories,
     memoriesLoading,
+    kbaStatus,
+    kbaNotes,
+    kbaLoading,
     searchResults,
     searchLoading
   } = useContextStore();
@@ -25,7 +30,24 @@ export function Context({ projectId }: ContextProps) {
   // Custom hooks
   useProjectContext(projectId);
   const handleRefreshIndex = useRefreshIndex(projectId);
-  const handleSearch = useMemorySearch(projectId);
+  const handleGraphitiSearch = useMemorySearch(projectId);
+
+  // KBA Memory handlers
+  const handleKBASearch = useCallback((query: string) => {
+    searchKBANotes(projectId, query);
+  }, [projectId]);
+
+  const handleAddKBANote = useCallback(async (title: string, content: string, tags: string[]) => {
+    return addKBANote(projectId, title, content, tags);
+  }, [projectId]);
+
+  const handleDeleteKBANote = useCallback(async (noteId: string) => {
+    return deleteKBANote(projectId, noteId);
+  }, [projectId]);
+
+  const handleRefreshKBA = useCallback(() => {
+    loadKBAMemory(projectId);
+  }, [projectId]);
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -38,7 +60,7 @@ export function Context({ projectId }: ContextProps) {
             </TabsTrigger>
             <TabsTrigger value="memories" className="gap-2">
               <Brain className="h-4 w-4" />
-              Memories
+              {memoryBackend === 'kba-memory' ? 'Notes' : 'Memories'}
             </TabsTrigger>
           </TabsList>
         </div>
@@ -53,17 +75,31 @@ export function Context({ projectId }: ContextProps) {
           />
         </TabsContent>
 
-        {/* Memories Tab */}
+        {/* Memories/Notes Tab */}
         <TabsContent value="memories" className="flex-1 overflow-hidden m-0">
-          <MemoriesTab
-            memoryStatus={memoryStatus}
-            memoryState={memoryState}
-            recentMemories={recentMemories}
-            memoriesLoading={memoriesLoading}
-            searchResults={searchResults}
-            searchLoading={searchLoading}
-            onSearch={handleSearch}
-          />
+          {memoryBackend === 'kba-memory' ? (
+            <KBANotesTab
+              kbaStatus={kbaStatus}
+              kbaNotes={kbaNotes}
+              kbaLoading={kbaLoading}
+              searchResults={searchResults}
+              searchLoading={searchLoading}
+              onSearch={handleKBASearch}
+              onAddNote={handleAddKBANote}
+              onDeleteNote={handleDeleteKBANote}
+              onRefresh={handleRefreshKBA}
+            />
+          ) : (
+            <MemoriesTab
+              memoryStatus={memoryStatus}
+              memoryState={memoryState}
+              recentMemories={recentMemories}
+              memoriesLoading={memoriesLoading}
+              searchResults={searchResults}
+              searchLoading={searchLoading}
+              onSearch={handleGraphitiSearch}
+            />
+          )}
         </TabsContent>
       </Tabs>
     </div>
