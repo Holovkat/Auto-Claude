@@ -133,6 +133,7 @@ async function getGitDiff(projectPath: string): Promise<GitDiffResult> {
 
 /**
  * Store doc generation summary in KBA memory
+ * Always stores/updates a note, even if no files changed
  */
 async function storeDocsInKBA(
   projectName: string,
@@ -142,16 +143,24 @@ async function storeDocsInKBA(
   projectPath: string
 ): Promise<boolean> {
   try {
+    console.log('[Docs Generation] KBA: Connecting to', kbaUrl);
+    
     // Get or create collection
     const collectionsRes = await fetch(`${kbaUrl}/api/collections`);
-    if (!collectionsRes.ok) return false;
+    if (!collectionsRes.ok) {
+      console.error('[Docs Generation] KBA: Failed to get collections:', collectionsRes.status, collectionsRes.statusText);
+      return false;
+    }
 
     const collections = await collectionsRes.json();
     let collection = Array.isArray(collections)
       ? collections.find((c: { name?: string }) => c.name?.toLowerCase() === projectName.toLowerCase())
       : null;
 
+    console.log('[Docs Generation] KBA: Found collection:', collection?.id || 'none');
+
     if (!collection) {
+      console.log('[Docs Generation] KBA: Creating new collection for', projectName);
       const createRes = await fetch(`${kbaUrl}/api/collections`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -160,12 +169,26 @@ async function storeDocsInKBA(
           description: `Knowledge base for project: ${projectName}`
         })
       });
-      if (!createRes.ok) return false;
+      if (!createRes.ok) {
+        console.error('[Docs Generation] KBA: Failed to create collection:', createRes.status, createRes.statusText);
+        return false;
+      }
       collection = await createRes.json();
+      console.log('[Docs Generation] KBA: Created collection:', collection.id);
+    }
+
+    // Check if a docs note already exists for this project
+    const notesRes = await fetch(`${kbaUrl}/api/notes?collectionId=${collection.id}`);
+    let existingNote = null;
+    if (notesRes.ok) {
+      const notes = await notesRes.json();
+      existingNote = Array.isArray(notes) 
+        ? notes.find((n: { tags?: string[] }) => n.tags?.includes('agents-md'))
+        : null;
+      console.log('[Docs Generation] KBA: Existing docs note:', existingNote?.id || 'none');
     }
 
     // Build summary content
-    const allFiles = [...filesCreated, ...filesModified];
     let summaryContent = `# Documentation Generated\n\n`;
     summaryContent += `Generated on: ${new Date().toISOString()}\n\n`;
 
@@ -185,27 +208,51 @@ async function storeDocsInKBA(
       summaryContent += '\n';
     }
 
+    if (filesCreated.length === 0 && filesModified.length === 0) {
+      summaryContent += `## Status\nNo file changes detected (files may already exist and be unchanged).\n\n`;
+    }
+
     // Include content preview from main AGENTS.md if it exists
     const rootAgentsMd = path.join(projectPath, 'AGENTS.md');
     if (existsSync(rootAgentsMd)) {
       const content = readFileSync(rootAgentsMd, 'utf-8');
       const preview = content.substring(0, 2000);
       summaryContent += `## Root AGENTS.md Preview\n\n\`\`\`markdown\n${preview}${content.length > 2000 ? '\n...(truncated)' : ''}\n\`\`\`\n`;
+    } else {
+      summaryContent += `## Status\nNo AGENTS.md file found at project root.\n`;
     }
 
-    // Create note
-    const noteRes = await fetch(`${kbaUrl}/api/notes`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        collectionId: collection.id,
-        title: `AGENTS.md Documentation - ${new Date().toLocaleDateString()}`,
-        content: summaryContent,
-        tags: DOCS_GENERATION_SUMMARY_TAGS
-      })
-    });
+    const noteTitle = `AGENTS.md Documentation - ${new Date().toLocaleDateString()}`;
 
-    return noteRes.ok;
+    // Update existing note or create new one
+    if (existingNote) {
+      console.log('[Docs Generation] KBA: Updating existing note:', existingNote.id);
+      const updateRes = await fetch(`${kbaUrl}/api/notes/${existingNote.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: noteTitle,
+          content: summaryContent,
+          tags: DOCS_GENERATION_SUMMARY_TAGS
+        })
+      });
+      console.log('[Docs Generation] KBA: Update result:', updateRes.ok, updateRes.status);
+      return updateRes.ok;
+    } else {
+      console.log('[Docs Generation] KBA: Creating new note');
+      const noteRes = await fetch(`${kbaUrl}/api/notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          collectionId: collection.id,
+          title: noteTitle,
+          content: summaryContent,
+          tags: DOCS_GENERATION_SUMMARY_TAGS
+        })
+      });
+      console.log('[Docs Generation] KBA: Create result:', noteRes.ok, noteRes.status);
+      return noteRes.ok;
+    }
   } catch (error) {
     console.error('[Docs Generation] Failed to store in KBA:', error);
     return false;
