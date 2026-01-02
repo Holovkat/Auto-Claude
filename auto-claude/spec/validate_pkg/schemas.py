@@ -79,6 +79,7 @@ IMPLEMENTATION_PLAN_SCHEMA = {
             "manual",
             "none",
             "e2e",
+            "file",
         ],
     },
 }
