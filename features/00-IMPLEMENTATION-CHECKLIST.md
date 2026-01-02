@@ -1,14 +1,18 @@
 # Implementation Checklist
 
 ## Phase 1: Backend plumbing (run.py/create_client/provider enum)
-- [ ] Align provider abstraction across backend engines and UI spawn flow
+- [x] Align provider abstraction across backend engines and UI spawn flow
   - Expected: Provider flag consistently routed UI → IPC → main → backend/CLI; engines selected per provider without Claude-only assumptions.
-- [ ] Backend: provider enum + auth gating + custom CLI engine stub + tool allowlist sharing
+  - Status: DONE (provider flag added to CLI, threaded through build/QA/followup, create_client accepts provider)
+- [x] Backend: provider enum + auth gating + custom CLI engine stub + tool allowlist sharing
   - Expected: Claude token gated; engines selectable; CLI engine runs without Claude deps; tool lists shared/disabled appropriately.
+  - Status: DONE (Claude auth gated; CustomCliAgentEngine placeholder added)
 - [ ] Support custom CLI session flow (capture session_id, resume with -s) and model arg templating
   - Expected: First CLI call yields session_id; subsequent calls resume; model passed via provider-specific arg.
+  - Status: TODO
 - [ ] Implement Droid CLI integration specifics: model arg, session resume (-s), stream-json input/output mode
   - Expected: Droid CLI callable with model `custom:GLM-4.7-[Z.AI-Coding-Plan]-7`, resume supported, optional stream-json usable.
+  - Status: TODO
 
 ## Phase 2: UI/IPC/settings
 - [ ] Add provider/model global settings UI with validation

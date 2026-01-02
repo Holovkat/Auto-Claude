@@ -8,6 +8,7 @@ CLI commands for QA validation (run QA, check status)
 import asyncio
 import sys
 from pathlib import Path
+from typing import Optional
 
 # Ensure parent directory is in path for imports (before other imports)
 _PARENT_DIR = Path(__file__).parent.parent
@@ -75,7 +76,7 @@ def handle_qa_command(
     project_dir: Path,
     spec_dir: Path,
     model: str,
-    provider: str | None = None,
+    provider: Optional[str] = None,
     verbose: bool = False,
 ) -> None:
     """

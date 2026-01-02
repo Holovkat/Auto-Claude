@@ -79,7 +79,14 @@ class AgentRunner:
             prompt += f"\n{additional_context}\n"
 
         # Create client
-        client = create_client(self.project_dir, self.spec_dir, self.model, verbose=self.verbose, cwd=self.project_dir)
+        client = create_client(
+            self.project_dir,
+            self.spec_dir,
+            self.model,
+            verbose=self.verbose,
+            cwd=self.project_dir,
+            provider=None,
+        )
 
         current_tool = None
 

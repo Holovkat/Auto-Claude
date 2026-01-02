@@ -8,6 +8,7 @@ CLI commands for building specs and handling the main build flow.
 import asyncio
 import sys
 from pathlib import Path
+from typing import Optional
 
 # Ensure parent directory is in path for imports (before other imports)
 _PARENT_DIR = Path(__file__).parent.parent
@@ -53,15 +54,15 @@ def handle_build_command(
     project_dir: Path,
     spec_dir: Path,
     model: str,
-    provider: str | None,
-    provider: str | None,
+    provider: Optional[str],
+    max_iterations: Optional[int],
     max_iterations: int | None,
     verbose: bool,
     force_isolated: bool,
     force_direct: bool,
     auto_continue: bool,
-    skip_qa: bool,
     force_bypass_approval: bool,
+    base_branch: Optional[str] = None,
     base_branch: str | None = None,
 ) -> None:
     """

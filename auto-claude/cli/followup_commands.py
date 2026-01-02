@@ -221,7 +221,7 @@ def handle_followup_command(
     project_dir: Path,
     spec_dir: Path,
     model: str,
-    provider: str | None = None,
+    provider: Optional[str] = None,
     verbose: bool = False,
 ) -> None:
     """
