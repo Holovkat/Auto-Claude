@@ -6,7 +6,6 @@ import { useProjectContext, useRefreshIndex, useMemorySearch } from './hooks';
 import { ProjectIndexTab } from './ProjectIndexTab';
 import { MemoriesTab } from './MemoriesTab';
 import { KBANotesTab } from './KBANotesTab';
-import { IPC_CHANNELS } from '../../../shared/constants';
 import type { ContextProps } from './types';
 
 export function Context({ projectId }: ContextProps) {
@@ -35,13 +34,14 @@ export function Context({ projectId }: ContextProps) {
 
   // Listen for docs generation events
   useEffect(() => {
-    const handleProgress = (_event: unknown, data: { projectId: string; phase: string; message: string }) => {
+    const unsubProgress = window.electronAPI.onDocsGenerationProgress((data) => {
       if (data.projectId === projectId) {
         console.log('[Docs Generation]', data.phase, data.message);
+        setDocsMessage(data.message);
       }
-    };
+    });
 
-    const handleComplete = (_event: unknown, data: { projectId: string; result: { filesCreated: string[]; filesModified: string[]; summary: string } }) => {
+    const unsubComplete = window.electronAPI.onDocsGenerationComplete((data) => {
       if (data.projectId === projectId) {
         setDocsGenerating(false);
         const { filesCreated, filesModified, summary } = data.result;
@@ -52,33 +52,28 @@ export function Context({ projectId }: ContextProps) {
           : summary;
         setDocsMessage(message);
         
-        // Auto-clear message after 5 seconds
-        setTimeout(() => setDocsMessage(null), 5000);
+        // Auto-clear message after 10 seconds
+        setTimeout(() => setDocsMessage(null), 10000);
 
         // Refresh KBA notes to show the new summary
         if (memoryBackend === 'kba-memory') {
           loadKBAMemory(projectId);
         }
       }
-    };
+    });
 
-    const handleError = (_event: unknown, data: { projectId: string; error: string }) => {
+    const unsubError = window.electronAPI.onDocsGenerationError((data) => {
       if (data.projectId === projectId) {
         setDocsGenerating(false);
         setDocsMessage(`Error: ${data.error}`);
-        setTimeout(() => setDocsMessage(null), 5000);
+        setTimeout(() => setDocsMessage(null), 10000);
       }
-    };
-
-    // Subscribe to events
-    window.electron?.ipcRenderer?.on(IPC_CHANNELS.DOCS_GENERATION_PROGRESS, handleProgress);
-    window.electron?.ipcRenderer?.on(IPC_CHANNELS.DOCS_GENERATION_COMPLETE, handleComplete);
-    window.electron?.ipcRenderer?.on(IPC_CHANNELS.DOCS_GENERATION_ERROR, handleError);
+    });
 
     return () => {
-      window.electron?.ipcRenderer?.removeListener(IPC_CHANNELS.DOCS_GENERATION_PROGRESS, handleProgress);
-      window.electron?.ipcRenderer?.removeListener(IPC_CHANNELS.DOCS_GENERATION_COMPLETE, handleComplete);
-      window.electron?.ipcRenderer?.removeListener(IPC_CHANNELS.DOCS_GENERATION_ERROR, handleError);
+      unsubProgress();
+      unsubComplete();
+      unsubError();
     };
   }, [projectId, memoryBackend]);
   const handleRefreshIndex = useRefreshIndex(projectId);

@@ -286,6 +286,9 @@ export interface ElectronAPI {
   // Documentation generation operations
   generateDocs: (projectId: string, model?: string) => Promise<IPCResult<DocsGenerationResult>>;
   getDocsChanges: (projectId: string) => Promise<IPCResult<DocsChangesResult>>;
+  onDocsGenerationProgress: (callback: (data: { projectId: string; phase: string; message: string }) => void) => () => void;
+  onDocsGenerationComplete: (callback: (data: { projectId: string; result: DocsGenerationResult }) => void) => () => void;
+  onDocsGenerationError: (callback: (data: { projectId: string; error: string }) => void) => () => void;
 
   // Environment configuration operations
   getProjectEnv: (projectId: string) => Promise<IPCResult<ProjectEnvConfig>>;

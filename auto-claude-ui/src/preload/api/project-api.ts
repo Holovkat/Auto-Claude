@@ -151,6 +151,25 @@ export const createProjectAPI = (): ProjectAPI => ({
   getDocsChanges: (projectId: string): Promise<IPCResult<{ filesCreated: string[]; filesModified: string[] }>> =>
     ipcRenderer.invoke(IPC_CHANNELS.DOCS_GET_CHANGES, projectId),
 
+  // Documentation Generation Events
+  onDocsGenerationProgress: (callback: (data: { projectId: string; phase: string; message: string }) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, data: { projectId: string; phase: string; message: string }) => callback(data);
+    ipcRenderer.on(IPC_CHANNELS.DOCS_GENERATION_PROGRESS, handler);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.DOCS_GENERATION_PROGRESS, handler);
+  },
+
+  onDocsGenerationComplete: (callback: (data: { projectId: string; result: { filesCreated: string[]; filesModified: string[]; summary: string } }) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, data: { projectId: string; result: { filesCreated: string[]; filesModified: string[]; summary: string } }) => callback(data);
+    ipcRenderer.on(IPC_CHANNELS.DOCS_GENERATION_COMPLETE, handler);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.DOCS_GENERATION_COMPLETE, handler);
+  },
+
+  onDocsGenerationError: (callback: (data: { projectId: string; error: string }) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, data: { projectId: string; error: string }) => callback(data);
+    ipcRenderer.on(IPC_CHANNELS.DOCS_GENERATION_ERROR, handler);
+    return () => ipcRenderer.removeListener(IPC_CHANNELS.DOCS_GENERATION_ERROR, handler);
+  },
+
   // Environment Configuration
   getProjectEnv: (projectId: string): Promise<IPCResult<ProjectEnvConfig>> =>
     ipcRenderer.invoke(IPC_CHANNELS.ENV_GET, projectId),
