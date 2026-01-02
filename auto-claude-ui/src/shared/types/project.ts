@@ -14,7 +14,7 @@ export interface Project {
 
 export interface ProjectSettings {
   model: string;
-  memoryBackend: 'graphiti' | 'file';
+  memoryBackend: 'graphiti' | 'kba-memory' | 'file';
   linearSync: boolean;
   linearTeamId?: string;
   notifications: NotificationSettings;
@@ -22,6 +22,8 @@ export interface ProjectSettings {
   graphitiMcpEnabled: boolean;
   /** Graphiti MCP server URL (default: http://localhost:8000/mcp/) */
   graphitiMcpUrl?: string;
+  /** KBA Memory API URL (default: http://localhost:3002) */
+  kbaMemoryUrl?: string;
   /** Main branch name for worktree creation (default: auto-detected or 'main') */
   mainBranch?: string;
 }

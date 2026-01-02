@@ -140,6 +140,7 @@ def create_client(
     verbose: bool = False,
     cwd: Optional[Path] = None,
     provider: Optional[str] = None,
+    project_name: Optional[str] = None,
 ) -> BaseAgentEngine:
     """
     Create a Claude Agent SDK client with multi-layered security.
@@ -152,6 +153,7 @@ def create_client(
                    This determines which custom auto-claude tools are available.
         verbose: Whether to enable verbose logging
         provider: Model provider to use
+        project_name: Name of the project (for kba-memory collection lookup)
 
     Returns:
         Configured Agent Engine
@@ -334,6 +336,7 @@ def create_client(
         settings=str(settings_file.resolve()),
         env=sdk_env,
         verbose=verbose,
+        project_name=project_name or project_dir.name,  # Default to directory name
     )
 
     model_lower = model.lower()

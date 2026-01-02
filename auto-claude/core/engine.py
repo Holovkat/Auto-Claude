@@ -39,6 +39,7 @@ class AgentOptions:
     settings: Optional[str] = None
     env: Optional[Dict[str, str]] = None
     verbose: bool = False
+    project_name: Optional[str] = None  # For kba-memory collection lookup
 
 
 class MCPManager:
@@ -870,7 +871,13 @@ class CustomCliAgentEngine(BaseAgentEngine):
         super().__init__(options)
         self.prompt = ""
         self.session_id = None
+        self.collected_output = []  # For post-processing insights
         self._load_session_id()
+        
+        # kba-memory integration - check env for memory backend setting
+        memory_backend = os.environ.get("MEMORY_BACKEND", "kba-memory")
+        self.kba_enabled = memory_backend == "kba-memory"
+        self.project_name = options.project_name
 
     def _load_session_id(self):
         if not self.options.spec_dir:
@@ -895,6 +902,18 @@ class CustomCliAgentEngine(BaseAgentEngine):
             pass
 
     async def query(self, message: str) -> None:
+        # Inject kba-memory context if enabled and project name is set
+        if self.kba_enabled and self.project_name:
+            try:
+                from .kba_memory import search_project_knowledge, format_context_for_prompt
+                notes = search_project_knowledge(self.project_name, message, limit=5)
+                if notes:
+                    context = format_context_for_prompt(notes, self.project_name)
+                    message = context + message
+                    print(f"[KBA Memory] Injected {len(notes)} notes from '{self.project_name}' collection")
+            except Exception as e:
+                print(f"[KBA Memory] Failed to retrieve context: {e}")
+        
         self.prompt = message
 
     def set_system_prompt(self, prompt: str) -> None:
@@ -972,6 +991,9 @@ class CustomCliAgentEngine(BaseAgentEngine):
                 line_str = line.decode().strip()
                 if not line_str:
                     continue
+                
+                # Collect output for post-processing
+                self.collected_output.append(line_str)
                     
                 if is_output_streaming or "--output-format json" in template:
                     try:
@@ -1014,9 +1036,36 @@ class CustomCliAgentEngine(BaseAgentEngine):
                 stderr_data = await process.stderr.read()
                 if stderr_data:
                     yield AssistantMessage(f"\n[CLI Error]: {stderr_data.decode().strip()}")
+            
+            # Post-process: Extract and store insights
+            if self.kba_enabled and self.project_name and process.returncode == 0:
+                await self._store_insights()
 
         except Exception as e:
             yield AssistantMessage(f"Error running custom CLI: {str(e)}")
+    
+    async def _store_insights(self) -> None:
+        """Extract insights from collected output and store in kba-memory."""
+        if not self.collected_output:
+            return
+        
+        try:
+            from .kba_memory import extract_insights_from_output, add_project_note
+            
+            full_output = "\n".join(self.collected_output)
+            insights = extract_insights_from_output(full_output)
+            
+            for insight in insights:
+                success = add_project_note(
+                    self.project_name,
+                    insight["title"],
+                    insight["content"],
+                    insight.get("tags", [])
+                )
+                if success:
+                    print(f"[KBA Memory] Stored insight: {insight['title']}")
+        except Exception as e:
+            print(f"[KBA Memory] Failed to store insights: {e}")
 
     async def cleanup(self) -> None:
         pass

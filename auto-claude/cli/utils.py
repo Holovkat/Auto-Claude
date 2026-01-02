@@ -54,16 +54,16 @@ def setup_environment() -> Path:
     dev_env_file = script_dir.parent / "dev" / "auto-claude" / ".env"
     
     if root_env_file.exists() and DOTENV_AVAILABLE:
-        print(f"Loading environment from {root_env_file}")
+        print(f"Loading environment from {root_env_file}", file=sys.stderr)
         load_dotenv(root_env_file)
     elif env_file.exists() and DOTENV_AVAILABLE:
-        print(f"Loading environment from {env_file}")
+        print(f"Loading environment from {env_file}", file=sys.stderr)
         load_dotenv(env_file)
     elif dev_env_file.exists() and DOTENV_AVAILABLE:
-        print(f"Loading environment from {dev_env_file}")
+        print(f"Loading environment from {dev_env_file}", file=sys.stderr)
         load_dotenv(dev_env_file)
     else:
-        print(f"No .env file found (checked {root_env_file}, {env_file}) or python-dotenv missing ({DOTENV_AVAILABLE})")
+        print(f"No .env file found (checked {root_env_file}, {env_file}) or python-dotenv missing ({DOTENV_AVAILABLE})", file=sys.stderr)
 
     return script_dir
 

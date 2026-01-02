@@ -53,7 +53,7 @@ export const DEFAULT_APP_SETTINGS = {
 
 export const DEFAULT_PROJECT_SETTINGS = {
   model: 'opus',
-  memoryBackend: 'file' as const,
+  memoryBackend: 'kba-memory' as const,
   linearSync: false,
   notifications: {
     onTaskComplete: true,
@@ -61,9 +61,11 @@ export const DEFAULT_PROJECT_SETTINGS = {
     onReviewNeeded: true,
     sound: false
   },
-  // Graphiti MCP server for agent-accessible knowledge graph (enabled by default)
-  graphitiMcpEnabled: true,
-  graphitiMcpUrl: 'http://localhost:8000/mcp/'
+  // Graphiti MCP server for agent-accessible knowledge graph
+  graphitiMcpEnabled: false,
+  graphitiMcpUrl: 'http://localhost:8000/mcp/',
+  // KBA Memory server URL
+  kbaMemoryUrl: 'http://localhost:3002'
 };
 
 // ============================================

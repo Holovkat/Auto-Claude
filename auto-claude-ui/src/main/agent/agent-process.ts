@@ -85,6 +85,16 @@ export class AgentProcessManager {
     const project = projects.find((p) => p.path === projectPath);
 
     if (project?.settings) {
+      // Memory backend setting
+      const memoryBackend = project.settings.memoryBackend || 'kba-memory';
+      env['MEMORY_BACKEND'] = memoryBackend;
+      
+      // KBA Memory URL
+      if (memoryBackend === 'kba-memory') {
+        const kbaUrl = project.settings.kbaMemoryUrl || 'http://localhost:3002';
+        env['KBA_API_URL'] = kbaUrl;
+      }
+      
       // Graphiti MCP integration
       if (project.settings.graphitiMcpEnabled) {
         const graphitiUrl = project.settings.graphitiMcpUrl || 'http://localhost:8000/mcp/';

@@ -12,6 +12,7 @@ from __future__ import annotations
 from typing import Optional
 
 import logging
+import os
 import subprocess
 from datetime import datetime
 from pathlib import Path
@@ -88,9 +89,15 @@ class ModificationTracker:
 
         # Get or create evolution
         if rel_path not in evolutions:
-            logger.warning(f"File {rel_path} not being tracked")
-            # Note: We could auto-create here, but for now return None
-            return None
+            # Auto-create evolution for new files discovered from git
+            logger.info(f"Auto-creating evolution for {rel_path}")
+            evolutions[rel_path] = FileEvolution(
+                file_path=rel_path,
+                baseline_commit="",
+                baseline_captured_at=datetime.now(),
+                baseline_content_hash=compute_content_hash(old_content) if old_content else "",
+                baseline_snapshot_path="",  # No baseline snapshot for auto-discovered files
+            )
 
         evolution = evolutions.get(rel_path)
         if not evolution:
@@ -151,12 +158,17 @@ class ModificationTracker:
 
         try:
             # Get list of files changed in the worktree
+            # Use GIT_PAGER to prevent git from waiting for pager input
+            git_env = {**os.environ, "GIT_PAGER": "cat", "PAGER": "cat"}
+            
             result = subprocess.run(
                 ["git", "diff", "--name-only", "main...HEAD"],
                 cwd=worktree_path,
                 capture_output=True,
                 text=True,
                 check=True,
+                timeout=30,
+                env=git_env,
             )
             changed_files = [f for f in result.stdout.strip().split("\n") if f]
 
@@ -170,13 +182,20 @@ class ModificationTracker:
 
             for file_path in changed_files:
                 # Get the diff for this file
-                diff_result = subprocess.run(
-                    ["git", "diff", "main...HEAD", "--", file_path],
-                    cwd=worktree_path,
-                    capture_output=True,
-                    text=True,
-                    check=True,
-                )
+                try:
+                    diff_result = subprocess.run(
+                        ["git", "diff", "main...HEAD", "--", file_path],
+                        cwd=worktree_path,
+                        capture_output=True,
+                        text=True,
+                        check=True,
+                        timeout=10,
+                        env=git_env,
+                    )
+                    raw_diff = diff_result.stdout
+                except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+                    logger.warning(f"Failed to get diff for {file_path}: {e}")
+                    raw_diff = ""
 
                 # Get content before (from main) and after (current)
                 try:
@@ -186,15 +205,20 @@ class ModificationTracker:
                         capture_output=True,
                         text=True,
                         check=True,
+                        timeout=10,
+                        env=git_env,
                     )
                     old_content = show_result.stdout
-                except subprocess.CalledProcessError:
-                    # File is new
+                except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+                    # File is new or timed out
                     old_content = ""
 
                 current_file = worktree_path / file_path
                 if current_file.exists():
-                    new_content = current_file.read_text(encoding="utf-8")
+                    try:
+                        new_content = current_file.read_text(encoding="utf-8")
+                    except Exception:
+                        new_content = ""
                 else:
                     # File was deleted
                     new_content = ""
@@ -206,7 +230,7 @@ class ModificationTracker:
                     old_content=old_content,
                     new_content=new_content,
                     evolutions=evolutions,
-                    raw_diff=diff_result.stdout,
+                    raw_diff=raw_diff,
                 )
 
             logger.info(
@@ -215,6 +239,8 @@ class ModificationTracker:
 
         except subprocess.CalledProcessError as e:
             logger.error(f"Failed to refresh from git: {e}")
+        except subprocess.TimeoutExpired as e:
+            logger.error(f"Git command timed out: {e}")
 
     def mark_task_completed(
         self,

@@ -40,13 +40,17 @@ export function MemoryBackendSection({
   onOpenDockerDesktop,
   onDownloadDocker,
 }: MemoryBackendSectionProps) {
+  const memoryBackend = settings.memoryBackend || 'kba-memory';
+  
+  const badgeText = memoryBackend === 'kba-memory' ? 'KBA Memory' : 
+                    memoryBackend === 'graphiti' ? 'Graphiti' : 'File-based';
+  const badgeClass = memoryBackend !== 'file' 
+    ? 'bg-success/10 text-success' 
+    : 'bg-muted text-muted-foreground';
+  
   const badge = (
-    <span className={`px-2 py-0.5 text-xs rounded-full ${
-      envConfig.graphitiEnabled
-        ? 'bg-success/10 text-success'
-        : 'bg-muted text-muted-foreground'
-    }`}>
-      {envConfig.graphitiEnabled ? 'Graphiti' : 'File-based'}
+    <span className={`px-2 py-0.5 text-xs rounded-full ${badgeClass}`}>
+      {badgeText}
     </span>
   );
 
@@ -58,33 +62,67 @@ export function MemoryBackendSection({
       onToggle={onToggle}
       badge={badge}
     >
-      <div className="flex items-center justify-between">
-        <div className="space-y-0.5">
-          <Label className="font-normal text-foreground">Use Graphiti (Recommended)</Label>
-          <p className="text-xs text-muted-foreground">
-            Persistent cross-session memory using FalkorDB graph database
-          </p>
-        </div>
-        <Switch
-          checked={envConfig.graphitiEnabled}
-          onCheckedChange={(checked) => {
-            onUpdateConfig({ graphitiEnabled: checked });
-            // Also update project settings to match
-            onUpdateSettings({ memoryBackend: checked ? 'graphiti' : 'file' });
+      {/* Memory Backend Selection */}
+      <div className="space-y-2">
+        <Label className="text-sm font-medium text-foreground">Memory Backend</Label>
+        <p className="text-xs text-muted-foreground">
+          Choose how agent memory is stored and retrieved
+        </p>
+        <Select
+          value={memoryBackend}
+          onValueChange={(value: 'graphiti' | 'kba-memory' | 'file') => {
+            onUpdateSettings({ memoryBackend: value });
+            // Sync graphitiEnabled with backend selection
+            onUpdateConfig({ graphitiEnabled: value === 'graphiti' });
           }}
-        />
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select memory backend" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="kba-memory">KBA Memory (Recommended)</SelectItem>
+            <SelectItem value="graphiti">Graphiti (Graph DB)</SelectItem>
+            <SelectItem value="file">File-based (Local JSON)</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {!envConfig.graphitiEnabled && (
-        <div className="rounded-lg border border-border bg-muted/30 p-3">
+      {/* KBA Memory Settings */}
+      {memoryBackend === 'kba-memory' && (
+        <div className="space-y-4 mt-4">
+          <div className="rounded-lg border border-success/30 bg-success/5 p-3">
+            <p className="text-xs text-success">
+              Using KBA Memory with Qdrant vector database and Ollama embeddings.
+              Each project gets its own isolated collection.
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-foreground">KBA Memory Server URL</Label>
+            <p className="text-xs text-muted-foreground">
+              URL of your KBA Memory server
+            </p>
+            <Input
+              placeholder="http://localhost:3002"
+              value={settings.kbaMemoryUrl || ''}
+              onChange={(e) => onUpdateSettings({ kbaMemoryUrl: e.target.value || undefined })}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* File-based info */}
+      {memoryBackend === 'file' && (
+        <div className="rounded-lg border border-border bg-muted/30 p-3 mt-4">
           <p className="text-xs text-muted-foreground">
             Using file-based memory. Session insights are stored locally in JSON files.
-            Enable Graphiti for persistent cross-session memory with semantic search.
+            No external services required, but no semantic search or cross-session memory.
           </p>
         </div>
       )}
 
-      {envConfig.graphitiEnabled && (
+      {/* Graphiti Settings */}
+      {memoryBackend === 'graphiti' && (
         <>
           {/* Infrastructure Status - Dynamic Docker/FalkorDB check */}
           <InfrastructureStatus

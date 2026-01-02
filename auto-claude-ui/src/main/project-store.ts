@@ -6,6 +6,47 @@ import type { Project, ProjectSettings, Task, TaskStatus, TaskMetadata, Implemen
 import { DEFAULT_PROJECT_SETTINGS, AUTO_BUILD_PATHS, getSpecsDir } from '../shared/constants';
 import { getAutoBuildPath, isInitialized } from './project-initializer';
 
+const KBA_API_URL = process.env.KBA_API_URL || 'http://localhost:3002';
+
+/**
+ * Create a kba-memory collection for a project (fire-and-forget)
+ */
+async function ensureKbaCollection(projectName: string): Promise<void> {
+  try {
+    // Check if collection exists
+    const listResponse = await fetch(`${KBA_API_URL}/api/collections`);
+    if (!listResponse.ok) return;
+    
+    const collections = await listResponse.json();
+    const exists = Array.isArray(collections) && 
+      collections.some((c: { name?: string }) => c.name?.toLowerCase() === projectName.toLowerCase());
+    
+    if (exists) {
+      console.log(`[KBA Memory] Collection "${projectName}" already exists`);
+      return;
+    }
+    
+    // Create collection
+    const createResponse = await fetch(`${KBA_API_URL}/api/collections`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: projectName,
+        description: `Knowledge base for project: ${projectName}`
+      })
+    });
+    
+    if (createResponse.ok) {
+      console.log(`[KBA Memory] Created collection "${projectName}"`);
+    } else {
+      console.warn(`[KBA Memory] Failed to create collection: ${createResponse.statusText}`);
+    }
+  } catch (error) {
+    // Silently fail - kba-memory server might not be running
+    console.warn(`[KBA Memory] Could not connect to server: ${error}`);
+  }
+}
+
 interface StoreData {
   projects: Project[];
   settings: Record<string, unknown>;
@@ -89,6 +130,11 @@ export class ProjectStore {
 
     this.data.projects.push(project);
     this.save();
+
+    // Create kba-memory collection for this project (fire-and-forget)
+    ensureKbaCollection(projectName).catch(() => {
+      // Silently ignore - server might not be running
+    });
 
     return project;
   }

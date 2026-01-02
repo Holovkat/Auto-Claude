@@ -1,3 +1,30 @@
+## 2.6.0 - Provider Decoupling & Memory Backend Selection
+
+### ✨ New Features
+
+- Multi-provider support: Choose between Claude, OpenAI, Gemini, or custom CLI (e.g., Droid)
+- KBA Memory integration with project-specific collections for semantic search
+- Memory backend selector in project settings: KBA Memory, Graphiti, or File-based
+- Droid CLI integration with stream-json output parsing and smart session handling
+- Provider configuration UI with model selection and custom CLI template support
+
+### 🛠️ Improvements
+
+- Smart session ID handling: auto-append `-s` flag only when session exists
+- Merge preview JSON output cleanup by redirecting env loading logs to stderr
+- Git operation timeouts (30s/10s) to prevent merge preview hangs
+- Auto-create kba-memory collections when creating new projects
+- Pass memory backend configuration as environment variables to agent processes
+
+### 🐛 Bug Fixes
+
+- Fixed merge preview infinite loop caused by stdout pollution from debug logs
+- Fixed FileEvolution auto-creation for git-discovered files with required baseline_snapshot_path
+- Fixed argument cleaning to strip flags with empty values from custom CLI commands
+- Added 'file' as valid verification type in plan schema validation
+
+---
+
 ## 2.5.0 - Roadmap Intelligence & Workflow Refinements
 
 ### ✨ New Features

@@ -60,11 +60,14 @@ export function SecuritySettings({
           <Database className="h-4 w-4" />
           Memory Backend
           <span className={`px-2 py-0.5 text-xs rounded-full ${
-            envConfig.graphitiEnabled
+            settings.memoryBackend === 'kba-memory'
               ? 'bg-success/10 text-success'
+              : settings.memoryBackend === 'graphiti'
+              ? 'bg-info/10 text-info'
               : 'bg-muted text-muted-foreground'
           }`}>
-            {envConfig.graphitiEnabled ? 'Graphiti' : 'File-based'}
+            {settings.memoryBackend === 'kba-memory' ? 'KBA Memory' : 
+             settings.memoryBackend === 'graphiti' ? 'Graphiti' : 'File-based'}
           </span>
         </div>
         {expanded ? (
@@ -76,32 +79,66 @@ export function SecuritySettings({
 
       {expanded && (
         <div className="space-y-4 pl-6 pt-2">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label className="font-normal text-foreground">Use Graphiti (Recommended)</Label>
-              <p className="text-xs text-muted-foreground">
-                Persistent cross-session memory using FalkorDB graph database
-              </p>
-            </div>
-            <Switch
-              checked={envConfig.graphitiEnabled}
-              onCheckedChange={(checked) => {
-                updateEnvConfig({ graphitiEnabled: checked });
-                setSettings({ ...settings, memoryBackend: checked ? 'graphiti' : 'file' });
+          {/* Memory Backend Selection */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-foreground">Memory Backend</Label>
+            <p className="text-xs text-muted-foreground">
+              Choose how agent memory is stored and retrieved
+            </p>
+            <Select
+              value={settings.memoryBackend || 'file'}
+              onValueChange={(value: 'graphiti' | 'kba-memory' | 'file') => {
+                setSettings({ ...settings, memoryBackend: value });
+                updateEnvConfig({ graphitiEnabled: value === 'graphiti' });
               }}
-            />
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select memory backend" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="kba-memory">KBA Memory (Recommended)</SelectItem>
+                <SelectItem value="graphiti">Graphiti (Graph DB)</SelectItem>
+                <SelectItem value="file">File-based (Local JSON)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          {!envConfig.graphitiEnabled && (
+          {/* KBA Memory Settings */}
+          {settings.memoryBackend === 'kba-memory' && (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-success/30 bg-success/5 p-3">
+                <p className="text-xs text-success">
+                  Using KBA Memory with Qdrant vector database and Ollama embeddings.
+                  Each project gets its own isolated collection.
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-foreground">KBA Memory Server URL</Label>
+                <p className="text-xs text-muted-foreground">
+                  URL of your KBA Memory server
+                </p>
+                <Input
+                  placeholder="http://localhost:3002"
+                  value={settings.kbaMemoryUrl || ''}
+                  onChange={(e) => setSettings({ ...settings, kbaMemoryUrl: e.target.value || undefined })}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* File-based info */}
+          {settings.memoryBackend === 'file' && (
             <div className="rounded-lg border border-border bg-muted/30 p-3">
               <p className="text-xs text-muted-foreground">
                 Using file-based memory. Session insights are stored locally in JSON files.
-                Enable Graphiti for persistent cross-session memory with semantic search.
+                No external services required, but no semantic search or cross-session memory.
               </p>
             </div>
           )}
 
-          {envConfig.graphitiEnabled && (
+          {/* Graphiti Settings */}
+          {settings.memoryBackend === 'graphiti' && (
             <>
               <div className="rounded-lg border border-warning/30 bg-warning/5 p-3">
                 <p className="text-xs text-warning">
