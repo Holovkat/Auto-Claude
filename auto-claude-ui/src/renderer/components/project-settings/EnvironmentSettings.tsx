@@ -9,10 +9,13 @@ import {
   Check,
   Star,
   Settings,
-  Users
+  Users,
+  Bot
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { AVAILABLE_MODELS } from '../../../shared/constants';
 import { cn } from '../../lib/utils';
 import type { ProjectEnvConfig, ClaudeProfile } from '../../../shared/types';
 
@@ -34,6 +37,10 @@ interface EnvironmentSettingsProps {
   // Collapsible section
   expanded: boolean;
   onToggle: () => void;
+
+  // Model selection
+  model?: string;
+  onModelChange?: (model: string) => void;
 }
 
 export function EnvironmentSettings({
@@ -44,7 +51,9 @@ export function EnvironmentSettings({
   claudeAuthStatus,
   handleClaudeSetup,
   expanded,
-  onToggle
+  onToggle,
+  model,
+  onModelChange
 }: EnvironmentSettingsProps) {
   // Load global Claude profiles to show active account
   const [claudeProfiles, setClaudeProfiles] = useState<ClaudeProfile[]>([]);
@@ -211,6 +220,31 @@ export function EnvironmentSettings({
                           ))
                         }
                       </div>
+                    </div>
+                  )}
+
+                  {/* Model Selection */}
+                  {onModelChange && (
+                    <div className="rounded-lg border border-border bg-muted/30 p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Bot className="h-4 w-4 text-muted-foreground" />
+                        <Label className="text-sm font-medium text-foreground">AI Model</Label>
+                      </div>
+                      <Select value={model} onValueChange={onModelChange}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {AVAILABLE_MODELS.map((modelOption) => (
+                            <SelectItem key={modelOption.value} value={modelOption.value}>
+                              {modelOption.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Select the AI model to use for agent tasks in this project.
+                      </p>
                     </div>
                   )}
                 </div>

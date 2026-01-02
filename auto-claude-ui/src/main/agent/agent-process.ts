@@ -161,6 +161,14 @@ export class AgentProcessManager {
     // Get active Claude profile environment (CLAUDE_CONFIG_DIR if not default)
     const profileEnv = getProfileEnv();
 
+    console.warn('[AgentProcess] Spawning process with:', {
+      pythonPath: this.pythonPath,
+      args: args.slice(0, 3), // First 3 args for brevity
+      profileEnvKeys: Object.keys(profileEnv),
+      hasZaiKey: !!profileEnv.ZAI_API_KEY,
+      hasGeminiKey: !!profileEnv.GEMINI_API_KEY
+    });
+
     const childProcess = spawn(this.pythonPath, args, {
       cwd,
       env: {
@@ -173,6 +181,7 @@ export class AgentProcessManager {
       }
     });
 
+    console.warn('[AgentProcess] Spawned:', { pid: childProcess.pid });
     this.state.addProcess(taskId, {
       taskId,
       process: childProcess,
@@ -379,6 +388,8 @@ export class AgentProcessManager {
   getCombinedEnv(projectPath: string): Record<string, string> {
     const autoBuildEnv = this.loadAutoBuildEnv();
     const projectEnv = this.getProjectEnvVars(projectPath);
-    return { ...autoBuildEnv, ...projectEnv };
+    const profileEnv = getProfileEnv();
+    
+    return { ...autoBuildEnv, ...projectEnv, ...profileEnv };
   }
 }

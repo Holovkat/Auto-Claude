@@ -16,7 +16,18 @@ export const AVAILABLE_MODELS = [
   { value: 'gemini-3-pro-preview', label: 'Gemini 3 Pro (Preview)' },
   { value: 'gemini-3-flash-preview', label: 'Gemini 3 Flash (Preview)' },
   { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
-  { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' }
+  { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
+  // Z.ai / GLM Models
+  { value: 'GLM-4.7', label: 'GLM-4.7 (Flagship)' },
+  { value: 'GLM-4.6', label: 'GLM-4.6 (Z.ai)' },
+  { value: 'GLM-4.6V', label: 'GLM-4.6V (Z.ai)' },
+  { value: 'GLM-4.6V-Flash', label: 'GLM-4.6V Flash (Z.ai)' },
+  { value: 'GLM-4.5', label: 'GLM-4.5 (ARC/Z.ai)' },
+  { value: 'GLM-4.5-Air', label: 'GLM-4.5 Air (Z.ai)' },
+  { value: 'glm-4-plus', label: 'GLM-4 Plus' },
+  { value: 'glm-4-air', label: 'GLM-4 Air' },
+  { value: 'glm-4-flash', label: 'GLM-4 Flash' },
+  { value: 'glm-4v-plus', label: 'GLM-4V Plus' }
 ] as const;
 
 // ============================================
@@ -61,6 +72,56 @@ export const DEFAULT_AGENT_PROFILES: AgentProfile[] = [
     model: 'haiku',
     thinkingLevel: 'low',
     icon: 'Zap'
+  },
+  // GLM/Z.ai Profiles
+  {
+    id: 'glm-flagship',
+    name: 'GLM-4.7 Flagship',
+    description: 'High-performance model for complex tasks',
+    model: 'GLM-4.7',
+    thinkingLevel: 'high',
+    icon: 'Sparkles'
+  },
+  {
+    id: 'glm-vision',
+    name: 'GLM-4.6V Vision',
+    description: 'Vision-capable model for image analysis',
+    model: 'GLM-4.6V',
+    thinkingLevel: 'medium',
+    icon: 'Eye'
+  },
+  {
+    id: 'glm-balanced',
+    name: 'GLM-4.5 Balanced',
+    description: 'Good balance for most tasks',
+    model: 'GLM-4.5',
+    thinkingLevel: 'medium',
+    icon: 'Scale'
+  },
+  {
+    id: 'glm-quick',
+    name: 'GLM-4.5 Air Quick',
+    description: 'Fast model for quick iterations',
+    model: 'GLM-4.5-Air',
+    thinkingLevel: 'low',
+    icon: 'Zap'
+  },
+  // Gemini Profiles
+  {
+    id: 'gemini-pro',
+    name: 'Gemini 2.5 Pro',
+    description: 'High-performance Google model',
+    model: 'gemini-2.5-pro',
+    thinkingLevel: 'high',
+    icon: 'Sparkles'
+  },
+  {
+    id: 'gemini-flash',
+    name: 'Gemini 2.5 Flash',
+    description: 'Fast Google model for quick tasks',
+    model: 'gemini-2.5-flash',
+    thinkingLevel: 'low',
+    icon: 'Bolt'
   }
 ];
 

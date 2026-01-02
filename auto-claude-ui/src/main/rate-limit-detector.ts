@@ -3,6 +3,10 @@
  * Detects rate limit errors in stdout/stderr output and provides context.
  */
 
+import { existsSync, readFileSync } from 'fs';
+import { app } from 'electron';
+import path from 'path';
+
 import { getClaudeProfileManager } from './claude-profile-manager';
 
 /**
@@ -153,45 +157,101 @@ export function getProfileEnv(profileId?: string): Record<string, string> {
     configDir: profile?.configDir
   });
 
-  if (!profile) {
-    console.warn('[getProfileEnv] No profile found, using defaults');
-    return {};
-  }
-
-  // Prefer OAuth token (instant switching, no browser auth needed)
-  // Use profile manager to get decrypted token
-  if (profile.oauthToken) {
-    const decryptedToken = profileId
-      ? profileManager.getProfileToken(profileId)
-      : profileManager.getActiveProfileToken();
-
-    if (decryptedToken) {
-      console.warn('[getProfileEnv] Using OAuth token for profile:', profile.name);
-      return {
-        CLAUDE_CODE_OAUTH_TOKEN: decryptedToken
-      };
-    } else {
-      console.warn('[getProfileEnv] Failed to decrypt token for profile:', profile.name);
+  // Load global API keys for non-Claude models (ALWAYS load these, regardless of profile)
+  const settingsPath = path.join(app.getPath('userData'), 'settings.json');
+  let globalSettings: any = {};
+  
+  console.warn('[getProfileEnv] Loading settings from:', settingsPath);
+  console.warn('[getProfileEnv] Settings file exists:', existsSync(settingsPath));
+  
+  if (existsSync(settingsPath)) {
+    try {
+      const content = readFileSync(settingsPath, 'utf-8');
+      globalSettings = JSON.parse(content);
+      console.warn('[getProfileEnv] Loaded settings keys:', Object.keys(globalSettings));
+      console.warn('[getProfileEnv] Has GLM key:', !!globalSettings.globalGLMApiKey);
+      console.warn('[getProfileEnv] Has Gemini key:', !!globalSettings.globalGeminiApiKey);
+      console.warn('[getProfileEnv] Has Zai URL:', !!globalSettings.globalZaiBaseUrl);
+      console.warn('[getProfileEnv] Has Gemini URL:', !!globalSettings.globalGeminiBaseUrl);
+      console.warn('[getProfileEnv] Has OpenAI URL:', !!globalSettings.globalOpenAIBaseUrl);
+      console.warn('[getProfileEnv] Has Ollama URL:', !!globalSettings.globalOllamaBaseUrl);
+    } catch (error) {
+      console.warn('[getProfileEnv] Failed to load global settings:', error);
     }
   }
 
-  // Fallback: If default profile, no env vars needed
-  if (profile.isDefault) {
-    console.warn('[getProfileEnv] Using default profile (no env vars)');
-    return {};
+  const env: Record<string, string> = {};
+
+  // Add GLM API key if configured (do this FIRST, before any profile checks)
+  if (globalSettings.globalGLMApiKey) {
+    env.ZAI_API_KEY = globalSettings.globalGLMApiKey;
+    console.warn('[getProfileEnv] Added ZAI_API_KEY to environment');
   }
 
-  // Fallback: Use configDir for profiles without OAuth token (legacy)
-  if (profile.configDir) {
-    console.warn('[getProfileEnv] Using configDir fallback for profile:', profile.name);
-    console.warn('[getProfileEnv] WARNING: Profile has no OAuth token. Run "claude setup-token" and save the token to enable instant switching.');
-    return {
-      CLAUDE_CONFIG_DIR: profile.configDir
-    };
+  // Add GLM/Z.ai base URL if configured
+  if (globalSettings.globalZaiBaseUrl) {
+    env.ZAI_BASE_URL = globalSettings.globalZaiBaseUrl;
+    console.warn('[getProfileEnv] Added ZAI_BASE_URL to environment:', globalSettings.globalZaiBaseUrl);
   }
 
-  console.warn('[getProfileEnv] Profile has no auth method configured');
-  return {};
+  // Add Gemini API key if configured (do this FIRST, before any profile checks)
+  if (globalSettings.globalGeminiApiKey) {
+    env.GEMINI_API_KEY = globalSettings.globalGeminiApiKey;
+    console.warn('[getProfileEnv] Added GEMINI_API_KEY to environment');
+  }
+
+  // Add Gemini base URL if configured
+  if (globalSettings.globalGeminiBaseUrl) {
+    env.GEMINI_BASE_URL = globalSettings.globalGeminiBaseUrl;
+    console.warn('[getProfileEnv] Added GEMINI_BASE_URL to environment:', globalSettings.globalGeminiBaseUrl);
+  }
+
+  // Add OpenAI base URL if configured
+  if (globalSettings.globalOpenAIBaseUrl) {
+    env.OPENAI_BASE_URL = globalSettings.globalOpenAIBaseUrl;
+    console.warn('[getProfileEnv] Added OPENAI_BASE_URL to environment:', globalSettings.globalOpenAIBaseUrl);
+  }
+
+  // Add Ollama base URL if configured
+  if (globalSettings.globalOllamaBaseUrl) {
+    env.OLLAMA_BASE_URL = globalSettings.globalOllamaBaseUrl;
+    console.warn('[getProfileEnv] Added OLLAMA_BASE_URL to environment:', globalSettings.globalOllamaBaseUrl);
+  }
+
+  // If profile exists, handle Claude auth
+  if (profile) {
+    // Prefer OAuth token (instant switching, no browser auth needed)
+    // Use profile manager to get decrypted token
+    if (profile.oauthToken) {
+      const decryptedToken = profileId
+        ? profileManager.getProfileToken(profileId)
+        : profileManager.getActiveProfileToken();
+
+      if (decryptedToken) {
+        console.warn('[getProfileEnv] Using OAuth token for profile:', profile.name);
+        env.CLAUDE_CODE_OAUTH_TOKEN = decryptedToken;
+      } else {
+        console.warn('[getProfileEnv] Failed to decrypt token for profile:', profile.name);
+      }
+    }
+
+    // Fallback: If default profile, no additional env vars needed
+    if (profile.isDefault) {
+      console.warn('[getProfileEnv] Using default profile');
+      return env;
+    }
+
+    // Fallback: Use configDir for profiles without OAuth token (legacy)
+    if (profile.configDir) {
+      console.warn('[getProfileEnv] Using configDir fallback for profile:', profile.name);
+      console.warn('[getProfileEnv] WARNING: Profile has no OAuth token. Run "claude setup-token" and save the token to enable instant switching.');
+      env.CLAUDE_CONFIG_DIR = profile.configDir;
+    }
+  } else {
+    console.warn('[getProfileEnv] No profile found, using global keys only');
+  }
+
+  return env;
 }
 
 /**

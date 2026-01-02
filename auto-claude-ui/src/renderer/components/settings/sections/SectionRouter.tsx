@@ -122,6 +122,8 @@ export function SectionRouter({
               setShowClaudeToken={setShowClaudeToken}
               expanded={true}
               onToggle={() => {}}
+              model={settings.model}
+              onModelChange={(model) => setSettings({ ...settings, model })}
             />
           </InitializationGuard>
         </SettingsSection>

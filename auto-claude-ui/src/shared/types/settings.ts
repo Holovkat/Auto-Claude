@@ -30,6 +30,13 @@ export interface AppSettings {
   // Global API keys (used as defaults for all projects)
   globalClaudeOAuthToken?: string;
   globalOpenAIApiKey?: string;
+  globalGLMApiKey?: string;
+  globalGeminiApiKey?: string;
+  // Global API base URLs (for custom OpenAI-compatible endpoints)
+  globalZaiBaseUrl?: string;
+  globalGeminiBaseUrl?: string;
+  globalOpenAIBaseUrl?: string;
+  globalOllamaBaseUrl?: string;
   // Onboarding wizard completion state
   onboardingCompleted?: boolean;
   // Selected agent profile for preset model/thinking configurations

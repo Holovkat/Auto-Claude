@@ -17,7 +17,8 @@ import {
   ChevronRight,
   RefreshCw,
   Activity,
-  AlertCircle
+  AlertCircle,
+  Link
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -40,6 +41,8 @@ interface IntegrationSettingsProps {
 export function IntegrationSettings({ settings, onSettingsChange, isOpen }: IntegrationSettingsProps) {
   // Password visibility toggle for global API keys
   const [showGlobalOpenAIKey, setShowGlobalOpenAIKey] = useState(false);
+  const [showGLMApiKey, setShowGLMApiKey] = useState(false);
+  const [showGeminiApiKey, setShowGeminiApiKey] = useState(false);
 
   // Claude Accounts state
   const [claudeProfiles, setClaudeProfiles] = useState<ClaudeProfile[]>([]);
@@ -726,6 +729,8 @@ export function IntegrationSettings({ settings, onSettingsChange, isOpen }: Inte
               <Info className="h-4 w-4 text-info shrink-0 mt-0.5" />
               <p className="text-xs text-muted-foreground">
                 Keys set here are used as defaults. Individual projects can override these in their settings.
+                <br />
+                <span className="font-medium text-info">GLM and Gemini keys are required for non-Claude models.</span>
               </p>
             </div>
           </div>
@@ -756,6 +761,172 @@ export function IntegrationSettings({ settings, onSettingsChange, isOpen }: Inte
                 >
                   {showGlobalOpenAIKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="globalGLMKey" className="text-sm font-medium text-foreground">
+                GLM/Z.ai API Key
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Required for GLM-4.7, GLM-4.6, and GLM-4.5 models
+                <a href="https://open.bigmodel.cn/usercenter/apikeys" target="_blank" rel="noopener noreferrer" className="text-info hover:underline ml-2">
+                  Get API Key
+                </a>
+              </p>
+              <div className="relative max-w-lg">
+                <Input
+                  id="globalGLMKey"
+                  type={showGLMApiKey ? 'text' : 'password'}
+                  placeholder="zai-..."
+                  value={settings.globalGLMApiKey || ''}
+                  onChange={(e) =>
+                    onSettingsChange({ ...settings, globalGLMApiKey: e.target.value || undefined })
+                  }
+                  className="pr-10 font-mono text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowGLMApiKey(!showGLMApiKey)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showGLMApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="globalGeminiKey" className="text-sm font-medium text-foreground">
+                Google/Gemini API Key
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Required for Gemini 2.5 Pro and Flash models
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-info hover:underline ml-2">
+                  Get API Key
+                </a>
+              </p>
+              <div className="relative max-w-lg">
+                <Input
+                  id="globalGeminiKey"
+                  type={showGeminiApiKey ? 'text' : 'password'}
+                  placeholder="AIza..."
+                  value={settings.globalGeminiApiKey || ''}
+                  onChange={(e) =>
+                    onSettingsChange({ ...settings, globalGeminiApiKey: e.target.value || undefined })
+                  }
+                  className="pr-10 font-mono text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowGeminiApiKey(!showGeminiApiKey)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showGeminiApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* API Base URLs Subsection */}
+        <div className="space-y-4 pt-4 border-t border-border">
+          <div className="flex items-center gap-2">
+            <Link className="h-4 w-4 text-muted-foreground" />
+            <h4 className="text-sm font-semibold text-foreground">API Base URLs</h4>
+          </div>
+
+          <div className="rounded-lg bg-info/10 border border-info/30 p-3">
+            <div className="flex items-start gap-2">
+              <Info className="h-4 w-4 text-info shrink-0 mt-0.5" />
+              <p className="text-xs text-muted-foreground">
+                Configure custom API endpoints for OpenAI-compatible services (GLM/Z.ai, OpenAI, Ollama, etc.).
+                <span className="font-medium text-info"> Leave blank to use default URLs.</span>
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="space-y-2">
+              <Label htmlFor="globalZaiBaseUrl" className="text-sm font-medium text-foreground">
+                GLM/Z.ai API Base URL
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Default: https://api.z.ai/api/coding/paas/v4
+              </p>
+              <div className="relative max-w-lg">
+                <Input
+                  id="globalZaiBaseUrl"
+                  type="text"
+                  placeholder="https://api.z.ai/api/coding/paas/v4"
+                  value={settings.globalZaiBaseUrl || ''}
+                  onChange={(e) =>
+                    onSettingsChange({ ...settings, globalZaiBaseUrl: e.target.value || undefined })
+                  }
+                  className="font-mono text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="globalGeminiBaseUrl" className="text-sm font-medium text-foreground">
+                Gemini API Base URL
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Leave blank to use auto-configured URL from Google
+              </p>
+              <div className="relative max-w-lg">
+                <Input
+                  id="globalGeminiBaseUrl"
+                  type="text"
+                  placeholder="https://custom-gemini-endpoint.com"
+                  value={settings.globalGeminiBaseUrl || ''}
+                  onChange={(e) =>
+                    onSettingsChange({ ...settings, globalGeminiBaseUrl: e.target.value || undefined })
+                  }
+                  className="font-mono text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="globalOpenAIBaseUrl" className="text-sm font-medium text-foreground">
+                OpenAI API Base URL
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Default: https://api.openai.com/v1
+              </p>
+              <div className="relative max-w-lg">
+                <Input
+                  id="globalOpenAIBaseUrl"
+                  type="text"
+                  placeholder="https://api.openai.com/v1"
+                  value={settings.globalOpenAIBaseUrl || ''}
+                  onChange={(e) =>
+                    onSettingsChange({ ...settings, globalOpenAIBaseUrl: e.target.value || undefined })
+                  }
+                  className="font-mono text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="globalOllamaBaseUrl" className="text-sm font-medium text-foreground">
+                Ollama API Base URL
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Default: http://localhost:11434/v1
+              </p>
+              <div className="relative max-w-lg">
+                <Input
+                  id="globalOllamaBaseUrl"
+                  type="text"
+                  placeholder="http://localhost:11434/v1"
+                  value={settings.globalOllamaBaseUrl || ''}
+                  onChange={(e) =>
+                    onSettingsChange({ ...settings, globalOllamaBaseUrl: e.target.value || undefined })
+                  }
+                  className="font-mono text-sm"
+                />
               </div>
             </div>
           </div>

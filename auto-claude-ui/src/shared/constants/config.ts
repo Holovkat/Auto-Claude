@@ -25,6 +25,13 @@ export const DEFAULT_APP_SETTINGS = {
   // Global API keys (used as defaults for all projects)
   globalClaudeOAuthToken: undefined as string | undefined,
   globalOpenAIApiKey: undefined as string | undefined,
+  globalGLMApiKey: undefined as string | undefined,
+  globalGeminiApiKey: undefined as string | undefined,
+  // Global API base URLs (for custom OpenAI-compatible endpoints)
+  globalZaiBaseUrl: 'https://api.z.ai/api/coding/paas/v4',
+  globalGeminiBaseUrl: undefined as string | undefined,
+  globalOpenAIBaseUrl: 'https://api.openai.com/v1',
+  globalOllamaBaseUrl: 'http://localhost:11434/v1',
   // Selected agent profile - defaults to 'balanced' for good speed/quality balance
   selectedAgentProfile: 'balanced',
   // Changelog preferences (persisted between sessions)
