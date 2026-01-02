@@ -3,13 +3,13 @@
  * Handles AGENTS.md and README generation via AI agents
  */
 
-import { ipcMain } from 'electron';
+import { ipcMain, app } from 'electron';
 import type { BrowserWindow } from 'electron';
 import { spawn } from 'child_process';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync, unlinkSync, mkdirSync } from 'fs';
 import path from 'path';
-import { IPC_CHANNELS, AGENTS_MD_PROMPT, DOCS_GENERATION_SUMMARY_TAGS } from '../../shared/constants';
-import type { IPCResult, KBAMemoryNote } from '../../shared/types';
+import { IPC_CHANNELS, AGENTS_MD_PROMPT, DOCS_GENERATION_SUMMARY_TAGS, DEFAULT_APP_SETTINGS } from '../../shared/constants';
+import type { IPCResult, AppSettings } from '../../shared/types';
 import { projectStore } from '../project-store';
 
 interface DocsGenerationResult {
@@ -25,6 +25,59 @@ interface GitDiffResult {
 }
 
 const DEFAULT_KBA_URL = 'http://localhost:3002';
+
+/**
+ * Load app settings
+ */
+function loadSettings(): AppSettings {
+  const settingsPath = path.join(app.getPath('userData'), 'settings.json');
+  try {
+    if (existsSync(settingsPath)) {
+      const content = readFileSync(settingsPath, 'utf-8');
+      return { ...DEFAULT_APP_SETTINGS, ...JSON.parse(content) };
+    }
+  } catch {
+    // Return defaults on error
+  }
+  return DEFAULT_APP_SETTINGS;
+}
+
+/**
+ * Get CLI command based on provider settings
+ */
+function getCliCommand(settings: AppSettings): { command: string; args: string[] } {
+  const provider = settings.activeProvider || 'claude';
+  
+  switch (provider) {
+    case 'claude':
+      return { command: 'claude', args: ['--print'] };
+    
+    case 'custom':
+    case 'droid': {
+      // Parse the custom CLI template
+      const template = settings.customCliTemplate || 'droid exec --model {model} --output-format stream-json --auto high';
+      // Remove --output-format stream-json for print mode, and replace {model}
+      const model = settings.providerModel || 'claude-sonnet-4-20250514';
+      let cmd = template
+        .replace('--output-format stream-json', '')
+        .replace('{model}', model)
+        .trim();
+      
+      // For droid, we need to add -p for print mode
+      const parts = cmd.split(' ');
+      return { command: parts[0], args: [...parts.slice(1), '-p'] };
+    }
+    
+    case 'gemini':
+      return { command: 'gemini', args: ['--print'] };
+    
+    case 'openai':
+      return { command: 'openai', args: ['--print'] };
+    
+    default:
+      return { command: 'claude', args: ['--print'] };
+  }
+}
 
 /**
  * Get git diff to detect what files changed
@@ -186,30 +239,29 @@ export function registerDocsGenerationHandlers(
           });
         }
 
-        // Run the agent with the AGENTS.md prompt
-        // We'll create a temp file with the prompt and run claude with it
-        const promptFile = path.join(project.path, '.auto-claude', '.docs-prompt.tmp');
-        const promptDir = path.dirname(promptFile);
+        // Get CLI command based on provider settings
+        const settings = loadSettings();
+        const { command, args } = getCliCommand(settings);
+
+        // Write prompt to temp file to avoid command-line length limits
+        const promptDir = path.join(project.path, '.auto-claude');
+        const promptFile = path.join(promptDir, '.docs-prompt.md');
         
-        // Ensure directory exists
         if (!existsSync(promptDir)) {
-          const { mkdirSync } = await import('fs');
           mkdirSync(promptDir, { recursive: true });
         }
-
         writeFileSync(promptFile, AGENTS_MD_PROMPT, 'utf-8');
 
-        // Determine CLI command based on provider settings
-        const cliCommand = process.env.AUTO_CLAUDE_CLI_COMMAND || 'claude';
-
-        // Run agent with the prompt
-        const agentProcess = spawn(cliCommand, ['--print', '-p', AGENTS_MD_PROMPT], {
+        // Build the full command with args
+        const fullArgs = args.join(' ');
+        
+        // Run agent: cat prompt file and pipe to the configured CLI
+        const agentProcess = spawn('sh', ['-c', `cat "${promptFile}" | ${command} ${fullArgs}`], {
           cwd: project.path,
           env: {
             ...process.env,
-            ANTHROPIC_MODEL: 'claude-sonnet-4-20250514'
-          },
-          shell: true
+            ANTHROPIC_MODEL: settings.providerModel || 'claude-sonnet-4-20250514'
+          }
         });
 
         let stdout = '';
@@ -243,7 +295,6 @@ export function registerDocsGenerationHandlers(
 
         // Clean up temp file
         try {
-          const { unlinkSync } = await import('fs');
           unlinkSync(promptFile);
         } catch {
           // Ignore cleanup errors
