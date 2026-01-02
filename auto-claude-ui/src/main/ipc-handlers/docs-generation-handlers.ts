@@ -1,6 +1,6 @@
 /**
  * Documentation Generation IPC Handlers
- * Handles AGENTS.md and README generation via AI agents
+ * Handles README generation via AI agents
  */
 
 import { ipcMain, app } from 'electron';
@@ -8,7 +8,7 @@ import type { BrowserWindow } from 'electron';
 import { spawn } from 'child_process';
 import { existsSync, readFileSync, writeFileSync, unlinkSync, mkdirSync } from 'fs';
 import path from 'path';
-import { IPC_CHANNELS, AGENTS_MD_PROMPT, DOCS_GENERATION_SUMMARY_TAGS, DEFAULT_APP_SETTINGS } from '../../shared/constants';
+import { IPC_CHANNELS, DOCS_GENERATION_PROMPT, DOCS_GENERATION_SUMMARY_TAGS, DEFAULT_APP_SETTINGS } from '../../shared/constants';
 import type { IPCResult, AppSettings } from '../../shared/types';
 import { projectStore } from '../project-store';
 
@@ -212,18 +212,18 @@ async function storeDocsInKBA(
       summaryContent += `## Status\nNo file changes detected (files may already exist and be unchanged).\n\n`;
     }
 
-    // Include content preview from main AGENTS.md if it exists
-    const rootAgentsMd = path.join(projectPath, 'AGENTS.md');
-    if (existsSync(rootAgentsMd)) {
-      const content = readFileSync(rootAgentsMd, 'utf-8');
+    // Include content preview from README.md if it exists
+    const readmePath = path.join(projectPath, 'README.md');
+    if (existsSync(readmePath)) {
+      const content = readFileSync(readmePath, 'utf-8');
       // Limit to 1500 chars to avoid KBA embedding issues with long content
       const preview = content.substring(0, 1500);
-      summaryContent += `## Root AGENTS.md Preview\n\n${preview}${content.length > 1500 ? '\n\n...(truncated)' : ''}\n`;
+      summaryContent += `## README.md Preview\n\n${preview}${content.length > 1500 ? '\n\n...(truncated)' : ''}\n`;
     } else {
-      summaryContent += `## Status\nNo AGENTS.md file found at project root.\n`;
+      summaryContent += `## Status\nNo README.md file found at project root.\n`;
     }
 
-    const noteTitle = `AGENTS.md Documentation - ${new Date().toLocaleDateString()}`;
+    const noteTitle = `README Documentation - ${new Date().toLocaleDateString()}`;
 
     // Update existing note or create new one
     if (existingNote) {
@@ -317,7 +317,7 @@ export function registerDocsGenerationHandlers(
         if (!existsSync(promptDir)) {
           mkdirSync(promptDir, { recursive: true });
         }
-        writeFileSync(promptFile, AGENTS_MD_PROMPT, 'utf-8');
+        writeFileSync(promptFile, DOCS_GENERATION_PROMPT, 'utf-8');
 
         // Build CLI command from app settings (customCliTemplate + providerModel)
         const { command, args } = buildCliCommand(settings, promptFile, project.path);
@@ -397,12 +397,12 @@ export function registerDocsGenerationHandlers(
           f => !baselineDiff.filesModified.includes(f)
         );
 
-        // If no git changes detected, check if AGENTS.md exists (might have been committed already)
+        // If no git changes detected, check if README.md exists (might have been committed already)
         if (filesCreated.length === 0 && filesModified.length === 0) {
-          const rootAgentsMd = path.join(project.path, 'AGENTS.md');
-          if (existsSync(rootAgentsMd)) {
-            console.log('[Docs Generation] No git changes but AGENTS.md exists, treating as existing');
-            filesModified = ['AGENTS.md'];
+          const readmePath = path.join(project.path, 'README.md');
+          if (existsSync(readmePath)) {
+            console.log('[Docs Generation] No git changes but README.md exists, treating as existing');
+            filesModified = ['README.md'];
           }
         }
 
