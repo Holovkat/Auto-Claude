@@ -164,10 +164,8 @@ export class AgentQueueManager {
     // Add provider from config (overrides app settings) or fall back to app settings
     if (config.provider) {
       args.push('--provider', config.provider);
-      // For droid, also set the model
-      if (config.provider === 'droid') {
-        args.push('--model', 'droid');
-      }
+      // Note: For droid provider, the CustomCliAgentEngine uses AUTO_CLAUDE_CUSTOM_CLI_TEMPLATE
+      // which defaults to "droid exec --model {model} ..." - model comes from app settings
     } else {
       // Fall back to app settings
       args.push(...this.getProviderArgs());

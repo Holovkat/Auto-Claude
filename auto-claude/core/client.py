@@ -346,7 +346,7 @@ def create_client(
         return GeminiAgentEngine(options)
     if provider_name == "openai":
         return OpenAIAgentEngine(options)
-    if provider_name == "custom":
+    if provider_name in ("custom", "droid"):
         return CustomCliAgentEngine(options)
 
     # Model-based detection for backward compatibility
