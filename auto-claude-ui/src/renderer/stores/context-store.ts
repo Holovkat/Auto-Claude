@@ -324,6 +324,28 @@ export async function addKBANote(
 }
 
 /**
+ * Update a KBA note
+ */
+export async function updateKBANote(
+  projectId: string,
+  noteId: string,
+  updates: { title?: string; content?: string; tags?: string[] }
+): Promise<boolean> {
+  const store = useContextStore.getState();
+
+  try {
+    const result = await window.electronAPI.updateKBANote(projectId, noteId, updates);
+    if (result.success && result.data) {
+      store.updateKBANote(noteId, result.data);
+      return true;
+    }
+    return false;
+  } catch (_error) {
+    return false;
+  }
+}
+
+/**
  * Delete a KBA note
  */
 export async function deleteKBANote(

@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
   RefreshCw,
   Database,
@@ -8,7 +10,11 @@ import {
   Plus,
   Trash2,
   StickyNote,
-  Tag
+  Tag,
+  Pencil,
+  Eye,
+  X,
+  Save
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -28,6 +34,7 @@ interface KBANotesTabProps {
   searchLoading: boolean;
   onSearch: (query: string) => void;
   onAddNote: (title: string, content: string, tags: string[]) => Promise<boolean>;
+  onUpdateNote: (noteId: string, updates: { title?: string; content?: string; tags?: string[] }) => Promise<boolean>;
   onDeleteNote: (noteId: string) => Promise<boolean>;
   onRefresh: () => void;
 }
@@ -40,6 +47,7 @@ export function KBANotesTab({
   searchLoading,
   onSearch,
   onAddNote,
+  onUpdateNote,
   onDeleteNote,
   onRefresh
 }: KBANotesTabProps) {
@@ -49,6 +57,15 @@ export function KBANotesTab({
   const [newNoteContent, setNewNoteContent] = useState('');
   const [newNoteTags, setNewNoteTags] = useState('');
   const [isAdding, setIsAdding] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+
+  // Edit state
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editContent, setEditContent] = useState('');
+  const [editTags, setEditTags] = useState('');
+  const [editPreview, setEditPreview] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleSearch = () => {
     if (localSearchQuery.trim()) {
@@ -74,8 +91,42 @@ export function KBANotesTab({
       setNewNoteContent('');
       setNewNoteTags('');
       setShowAddForm(false);
+      setShowPreview(false);
     }
     setIsAdding(false);
+  };
+
+  const handleStartEdit = (note: KBAMemoryNote) => {
+    setEditingNoteId(note.id);
+    setEditTitle(note.title);
+    setEditContent(note.content);
+    setEditTags(note.tags.join(', '));
+    setEditPreview(false);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingNoteId(null);
+    setEditTitle('');
+    setEditContent('');
+    setEditTags('');
+    setEditPreview(false);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingNoteId || !editTitle.trim() || !editContent.trim()) return;
+
+    setIsSaving(true);
+    const tags = editTags.split(',').map(t => t.trim()).filter(Boolean);
+    const success = await onUpdateNote(editingNoteId, {
+      title: editTitle,
+      content: editContent,
+      tags
+    });
+
+    if (success) {
+      handleCancelEdit();
+    }
+    setIsSaving(false);
   };
 
   const handleDeleteNote = async (noteId: string) => {
@@ -165,9 +216,11 @@ export function KBANotesTab({
                         Score: {result.score.toFixed(2)}
                       </span>
                     </div>
-                    <pre className="text-xs text-muted-foreground whitespace-pre-wrap font-mono max-h-40 overflow-auto">
-                      {result.content}
-                    </pre>
+                    <div className="prose prose-sm prose-invert max-w-none text-xs text-muted-foreground">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {result.content}
+                      </ReactMarkdown>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -200,19 +253,56 @@ export function KBANotesTab({
                   value={newNoteTitle}
                   onChange={(e) => setNewNoteTitle(e.target.value)}
                 />
-                <Textarea
-                  placeholder="Note content..."
-                  value={newNoteContent}
-                  onChange={(e) => setNewNoteContent(e.target.value)}
-                  rows={4}
-                />
+                <div className="space-y-2">
+                  <div className="flex items-center justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowPreview(!showPreview)}
+                      className="h-7 px-2 text-xs"
+                    >
+                      {showPreview ? (
+                        <>
+                          <Pencil className="h-3 w-3 mr-1" />
+                          Edit
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="h-3 w-3 mr-1" />
+                          Preview
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  {showPreview ? (
+                    <div className="min-h-[100px] p-3 rounded-md border bg-muted/30 prose prose-sm prose-invert max-w-none">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {newNoteContent || '*No content*'}
+                      </ReactMarkdown>
+                    </div>
+                  ) : (
+                    <Textarea
+                      placeholder="Note content (supports Markdown)..."
+                      value={newNoteContent}
+                      onChange={(e) => setNewNoteContent(e.target.value)}
+                      rows={6}
+                      className="font-mono text-sm"
+                    />
+                  )}
+                </div>
                 <Input
                   placeholder="Tags (comma-separated)"
                   value={newNoteTags}
                   onChange={(e) => setNewNoteTags(e.target.value)}
                 />
                 <div className="flex justify-end gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => setShowAddForm(false)}>
+                  <Button variant="ghost" size="sm" onClick={() => {
+                    setShowAddForm(false);
+                    setShowPreview(false);
+                    setNewNoteTitle('');
+                    setNewNoteContent('');
+                    setNewNoteTags('');
+                  }}>
                     Cancel
                   </Button>
                   <Button
@@ -248,35 +338,122 @@ export function KBANotesTab({
           {kbaNotes.map((note) => (
             <Card key={note.id} className="group">
               <CardContent className="pt-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h4 className="font-medium text-sm">{note.title}</h4>
-                    <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">
-                      {note.content.length > 200 ? note.content.slice(0, 200) + '...' : note.content}
-                    </p>
-                    {note.tags.length > 0 && (
-                      <div className="flex items-center gap-1 mt-2">
-                        <Tag className="h-3 w-3 text-muted-foreground" />
-                        {note.tags.map((tag, idx) => (
-                          <Badge key={idx} variant="secondary" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
+                {editingNoteId === note.id ? (
+                  // Edit mode
+                  <div className="space-y-3">
+                    <Input
+                      placeholder="Note title"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                    />
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditPreview(!editPreview)}
+                          className="h-7 px-2 text-xs"
+                        >
+                          {editPreview ? (
+                            <>
+                              <Pencil className="h-3 w-3 mr-1" />
+                              Edit
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="h-3 w-3 mr-1" />
+                              Preview
+                            </>
+                          )}
+                        </Button>
                       </div>
-                    )}
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {new Date(note.createdAt).toLocaleDateString()}
-                    </p>
+                      {editPreview ? (
+                        <div className="min-h-[100px] p-3 rounded-md border bg-muted/30 prose prose-sm prose-invert max-w-none">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {editContent || '*No content*'}
+                          </ReactMarkdown>
+                        </div>
+                      ) : (
+                        <Textarea
+                          placeholder="Note content (supports Markdown)..."
+                          value={editContent}
+                          onChange={(e) => setEditContent(e.target.value)}
+                          rows={8}
+                          className="font-mono text-sm"
+                        />
+                      )}
+                    </div>
+                    <Input
+                      placeholder="Tags (comma-separated)"
+                      value={editTags}
+                      onChange={(e) => setEditTags(e.target.value)}
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button variant="ghost" size="sm" onClick={handleCancelEdit}>
+                        <X className="h-4 w-4 mr-1" />
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={handleSaveEdit}
+                        disabled={isSaving || !editTitle.trim() || !editContent.trim()}
+                      >
+                        {isSaving ? (
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <>
+                            <Save className="h-4 w-4 mr-1" />
+                            Save
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => handleDeleteNote(note.id)}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
+                ) : (
+                  // View mode
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-sm">{note.title}</h4>
+                      <div className="mt-2 prose prose-sm prose-invert max-w-none text-muted-foreground">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {note.content.length > 500 ? note.content.slice(0, 500) + '...' : note.content}
+                        </ReactMarkdown>
+                      </div>
+                      {note.tags.length > 0 && (
+                        <div className="flex items-center gap-1 mt-3 flex-wrap">
+                          <Tag className="h-3 w-3 text-muted-foreground" />
+                          {note.tags.map((tag, idx) => (
+                            <Badge key={idx} variant="secondary" className="text-xs">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-2">
+                        {new Date(note.createdAt).toLocaleDateString()}
+                        {note.updatedAt !== note.createdAt && (
+                          <span className="ml-2">(edited {new Date(note.updatedAt).toLocaleDateString()})</span>
+                        )}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleStartEdit(note)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteNote(note.id)}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}

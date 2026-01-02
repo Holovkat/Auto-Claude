@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { FolderTree, Brain } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { useContextStore, loadKBAMemory, searchKBANotes, addKBANote, deleteKBANote } from '../../stores/context-store';
+import { useContextStore, loadKBAMemory, searchKBANotes, addKBANote, updateKBANote, deleteKBANote } from '../../stores/context-store';
 import { useProjectContext, useRefreshIndex, useMemorySearch } from './hooks';
 import { ProjectIndexTab } from './ProjectIndexTab';
 import { MemoriesTab } from './MemoriesTab';
@@ -39,6 +39,10 @@ export function Context({ projectId }: ContextProps) {
 
   const handleAddKBANote = useCallback(async (title: string, content: string, tags: string[]) => {
     return addKBANote(projectId, title, content, tags);
+  }, [projectId]);
+
+  const handleUpdateKBANote = useCallback(async (noteId: string, updates: { title?: string; content?: string; tags?: string[] }) => {
+    return updateKBANote(projectId, noteId, updates);
   }, [projectId]);
 
   const handleDeleteKBANote = useCallback(async (noteId: string) => {
@@ -86,6 +90,7 @@ export function Context({ projectId }: ContextProps) {
               searchLoading={searchLoading}
               onSearch={handleKBASearch}
               onAddNote={handleAddKBANote}
+              onUpdateNote={handleUpdateKBANote}
               onDeleteNote={handleDeleteKBANote}
               onRefresh={handleRefreshKBA}
             />
