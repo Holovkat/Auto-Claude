@@ -8,13 +8,21 @@ Functions for creating and configuring the Claude Agent SDK client.
 import json
 import os
 from pathlib import Path
+from typing import Dict, Optional
 
 from auto_claude_tools import (
     create_auto_claude_mcp_server,
     get_allowed_tools,
     is_tools_available,
 )
-from .engine import AgentOptions, BaseAgentEngine, ClaudeAgentEngine, GeminiAgentEngine, OpenAIAgentEngine
+from .engine import (
+    AgentOptions,
+    BaseAgentEngine,
+    ClaudeAgentEngine,
+    GeminiAgentEngine,
+    OpenAIAgentEngine,
+    CustomCliAgentEngine,
+)
 from .auth import get_sdk_env_vars, require_auth_token
 from linear_updater import is_linear_enabled
 from security import bash_security_hook
@@ -131,6 +139,7 @@ def create_client(
     agent_type: str = "coder",
     verbose: bool = False,
     cwd: Path | None = None,
+    provider: Optional[str] = None,
 ) -> BaseAgentEngine:
     """
     Create a Claude Agent SDK client with multi-layered security.
@@ -153,12 +162,14 @@ def create_client(
        (see security.py for ALLOWED_COMMANDS)
     4. Tool filtering - Each agent type only sees relevant tools (prevents misuse)
     """
-    oauth_token = require_auth_token()
-    # Ensure SDK can access it via its expected env var
-    os.environ["CLAUDE_CODE_OAUTH_TOKEN"] = oauth_token
+    provider_name = (provider or "claude").lower()
 
-    # Collect env vars to pass to SDK (ANTHROPIC_BASE_URL, etc.)
-    sdk_env = get_sdk_env_vars()
+    # Collect env vars to pass to engine (provider-specific)
+    sdk_env: Dict[str, str] = {}
+    if provider_name == "claude":
+        oauth_token = require_auth_token()
+        os.environ["CLAUDE_CODE_OAUTH_TOKEN"] = oauth_token
+        sdk_env = get_sdk_env_vars()
 
     # Check if Linear integration is enabled
     linear_enabled = is_linear_enabled()
@@ -308,6 +319,7 @@ def create_client(
             f"your work through thorough testing. You communicate progress through Git commits "
             f"and build-progress.txt updates."
         ),
+        provider=provider_name,
         allowed_tools=get_allowed_tools(agent_type),
         mcp_servers=mcp_servers,
         hooks={
@@ -323,9 +335,19 @@ def create_client(
     )
 
     model_lower = model.lower()
+
+    # Provider-first dispatch
+    if provider_name == "gemini":
+        return GeminiAgentEngine(options)
+    if provider_name == "openai":
+        return OpenAIAgentEngine(options)
+    if provider_name == "custom":
+        return CustomCliAgentEngine(options)
+
+    # Model-based fallback for backward compatibility
     if model_lower.startswith("gemini"):
         return GeminiAgentEngine(options)
-    elif model_lower.startswith("glm") or model_lower.startswith("ollama") or model_lower.startswith("openai") or model_lower.startswith("z-"):
+    if model_lower.startswith("glm") or model_lower.startswith("ollama") or model_lower.startswith("openai") or model_lower.startswith("z-"):
         return OpenAIAgentEngine(options)
-    else:
-        return ClaudeAgentEngine(options)
+
+    return ClaudeAgentEngine(options)

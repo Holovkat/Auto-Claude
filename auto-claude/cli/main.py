@@ -120,6 +120,14 @@ Environment Variables:
     )
 
     parser.add_argument(
+        "--provider",
+        type=str,
+        default="claude",
+        choices=["claude", "openai", "gemini", "custom"],
+        help="Model provider (default: claude)",
+    )
+
+    parser.add_argument(
         "--verbose",
         action="store_true",
         help="Enable verbose output",
@@ -351,6 +359,7 @@ def main() -> None:
             project_dir=project_dir,
             spec_dir=spec_dir,
             model=model,
+            provider=args.provider,
             verbose=args.verbose,
         )
         return
@@ -361,6 +370,7 @@ def main() -> None:
             project_dir=project_dir,
             spec_dir=spec_dir,
             model=model,
+            provider=args.provider,
             verbose=args.verbose,
         )
         return
@@ -372,6 +382,7 @@ def main() -> None:
         model=model,
         max_iterations=args.max_iterations,
         verbose=args.verbose,
+        provider=args.provider,
         force_isolated=args.isolated,
         force_direct=args.direct,
         auto_continue=args.auto_continue,

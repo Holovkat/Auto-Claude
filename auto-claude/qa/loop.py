@@ -8,6 +8,7 @@ approval or max iterations.
 
 import time as time_module
 from pathlib import Path
+from typing import Optional
 
 from client import create_client
 from linear_updater import (
@@ -54,6 +55,7 @@ async def run_qa_validation_loop(
     project_dir: Path,
     spec_dir: Path,
     model: str,
+    provider: Optional[str] = None,
     verbose: bool = False,
 ) -> bool:
     """
@@ -130,7 +132,7 @@ async def run_qa_validation_loop(
         print(f"\n--- QA Iteration {qa_iteration}/{MAX_QA_ITERATIONS} ---")
 
         # Run QA reviewer
-        client = create_client(project_dir, spec_dir, model)
+        client = create_client(project_dir, spec_dir, model, provider=provider)
 
         async with client:
             status, response = await run_qa_agent_session(

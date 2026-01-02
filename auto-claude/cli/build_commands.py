@@ -53,6 +53,8 @@ def handle_build_command(
     project_dir: Path,
     spec_dir: Path,
     model: str,
+    provider: str | None,
+    provider: str | None,
     max_iterations: int | None,
     verbose: bool,
     force_isolated: bool,
@@ -69,6 +71,7 @@ def handle_build_command(
         project_dir: Project root directory
         spec_dir: Spec directory path
         model: Model to use
+        provider: Provider identifier (claude/openai/gemini/custom)
         max_iterations: Maximum number of iterations (None for unlimited)
         verbose: Enable verbose output
         force_isolated: Force isolated workspace mode
@@ -94,6 +97,8 @@ def handle_build_command(
     print(f"\nProject directory: {project_dir}")
     print(f"Spec: {spec_dir.name}")
     print(f"Model: {model}")
+    if provider:
+        print(f"Provider: {provider}")
 
     if max_iterations:
         print(f"Max iterations: {max_iterations}")
@@ -103,7 +108,7 @@ def handle_build_command(
     print()
 
     # Validate environment
-    if not validate_environment(spec_dir):
+    if not validate_environment(spec_dir, provider=provider):
         sys.exit(1)
 
     # Check human review approval
@@ -213,6 +218,7 @@ def handle_build_command(
                 project_dir=working_dir,  # Use worktree if isolated
                 spec_dir=spec_dir,
                 model=model,
+                provider=provider,
                 max_iterations=max_iterations,
                 verbose=verbose,
                 source_spec_dir=source_spec_dir,  # For syncing progress back to main project
@@ -236,6 +242,7 @@ def handle_build_command(
                         project_dir=working_dir,
                         spec_dir=spec_dir,
                         model=model,
+                        provider=provider,
                         verbose=verbose,
                     )
                 )
@@ -424,6 +431,7 @@ def _handle_build_interrupt(
                     project_dir=working_dir,
                     spec_dir=spec_dir,
                     model=model,
+                    provider=provider,
                     max_iterations=max_iterations,
                     verbose=verbose,
                 )

@@ -8,6 +8,7 @@ Main autonomous agent loop that runs the coder agent to implement subtasks.
 import asyncio
 import logging
 from pathlib import Path
+from typing import Optional
 
 from client import create_client
 from linear_updater import (
@@ -73,6 +74,7 @@ async def run_autonomous_agent(
     max_iterations: int | None = None,
     verbose: bool = False,
     source_spec_dir: Path | None = None,
+    provider: Optional[str] = None,
 ) -> None:
     """
     Run the autonomous agent loop with automatic memory management.
@@ -245,7 +247,14 @@ async def run_autonomous_agent(
         commit_count_before = get_commit_count(project_dir)
 
         # Create client (fresh context)
-        client = create_client(project_dir, spec_dir, model, verbose=verbose, cwd=project_dir)
+        client = create_client(
+            project_dir,
+            spec_dir,
+            model,
+            verbose=verbose,
+            cwd=project_dir,
+            provider=provider,
+        )
 
         # Generate appropriate prompt
         if first_run:

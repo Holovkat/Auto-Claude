@@ -75,6 +75,7 @@ def handle_qa_command(
     project_dir: Path,
     spec_dir: Path,
     model: str,
+    provider: str | None = None,
     verbose: bool = False,
 ) -> None:
     """
@@ -88,7 +89,7 @@ def handle_qa_command(
     """
     print_banner()
     print(f"\nRunning QA validation for: {spec_dir.name}")
-    if not validate_environment(spec_dir):
+    if not validate_environment(spec_dir, provider=provider):
         sys.exit(1)
 
     if not should_run_qa(spec_dir):
@@ -106,6 +107,7 @@ def handle_qa_command(
                 project_dir=project_dir,
                 spec_dir=spec_dir,
                 model=model,
+                provider=provider,
                 verbose=verbose,
             )
         )

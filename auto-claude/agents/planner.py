@@ -7,6 +7,7 @@ Handles follow-up planner sessions for adding new subtasks to completed specs.
 
 import logging
 from pathlib import Path
+from typing import Optional
 
 from client import create_client
 from task_logger import (
@@ -34,6 +35,7 @@ async def run_followup_planner(
     project_dir: Path,
     spec_dir: Path,
     model: str,
+    provider: Optional[str] = None,
     verbose: bool = False,
 ) -> bool:
     """
@@ -89,7 +91,7 @@ async def run_followup_planner(
         task_logger.set_session(1)
 
     # Create client (fresh context)
-    client = create_client(project_dir, spec_dir, model)
+    client = create_client(project_dir, spec_dir, model, provider=provider)
 
     # Generate follow-up planner prompt
     prompt = get_followup_planner_prompt(spec_dir)

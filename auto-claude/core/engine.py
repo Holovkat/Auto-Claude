@@ -26,6 +26,7 @@ class AgentOptions:
     """Configuration options for an agent engine."""
     model: str
     system_prompt: str
+    provider: Optional[str] = None
     allowed_tools: List[str] = field(default_factory=list)
     mcp_servers: Dict[str, Any] = field(default_factory=dict)
     hooks: Dict[str, List[Any]] = field(default_factory=dict)
@@ -850,3 +851,27 @@ class OpenAIAgentEngine(BaseAgentEngine):
     async def cleanup(self) -> None:
         if hasattr(self, 'client'):
             await self.client.close()
+
+
+class CustomCliAgentEngine(BaseAgentEngine):
+    """Placeholder engine for custom CLI providers (e.g., Droid)."""
+
+    def __init__(self, options: AgentOptions):
+        super().__init__(options)
+        self._warned = False
+
+    async def query(self, message: str) -> None:
+        if not self._warned:
+            print("Custom CLI provider not yet wired in engine; integrate CLI adapter for queries.")
+            self._warned = True
+
+    def set_system_prompt(self, prompt: str) -> None:
+        return None
+
+    async def receive_response(self) -> AsyncIterator[Any]:
+        if False:
+            yield None  # pragma: no cover
+        return
+
+    async def cleanup(self) -> None:
+        return None

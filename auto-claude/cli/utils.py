@@ -101,7 +101,7 @@ def find_spec(
     return None
 
 
-def validate_environment(spec_dir: Path) -> bool:
+def validate_environment(spec_dir: Path, provider: str | None = None) -> bool:
     """
     Validate that the environment is set up correctly.
 
@@ -110,25 +110,25 @@ def validate_environment(spec_dir: Path) -> bool:
     """
     valid = True
 
-    # Check for authentication token (supports multiple env vars)
-    if not get_auth_token():
-        print("Error: No authentication token found")
-        print(f"\nSet one of: {', '.join(AUTH_TOKEN_ENV_VARS)}")
-        print("\nFor Claude Code CLI, get your OAuth token by running:")
-        print("  claude setup-token")
-        print("\nThen set it:")
-        print("  export CLAUDE_CODE_OAUTH_TOKEN='your-token-here'")
-        valid = False
-    else:
-        # Show which auth source is being used
-        source = get_auth_token_source()
-        if source and source != "CLAUDE_CODE_OAUTH_TOKEN":
-            print(f"Auth: Using token from {source}")
+    # Check for authentication token (Claude-only)
+    provider_name = (provider or "claude").lower()
+    if provider_name == "claude":
+        if not get_auth_token():
+            print("Error: No authentication token found")
+            print(f"\nSet one of: {', '.join(AUTH_TOKEN_ENV_VARS)}")
+            print("\nFor Claude Code CLI, get your OAuth token by running:")
+            print("  claude setup-token")
+            print("\nThen set it:")
+            print("  export CLAUDE_CODE_OAUTH_TOKEN='your-token-here'")
+            valid = False
+        else:
+            source = get_auth_token_source()
+            if source and source != "CLAUDE_CODE_OAUTH_TOKEN":
+                print(f"Auth: Using token from {source}")
 
-        # Show custom base URL if set
-        base_url = os.environ.get("ANTHROPIC_BASE_URL")
-        if base_url:
-            print(f"API Endpoint: {base_url}")
+            base_url = os.environ.get("ANTHROPIC_BASE_URL")
+            if base_url:
+                print(f"API Endpoint: {base_url}")
 
     # Check for spec.md in spec directory
     spec_file = spec_dir / "spec.md"
