@@ -332,21 +332,40 @@ export function registerDocsGenerationHandlers(
 
         // Get diff after generation
         const afterDiff = await getGitDiff(project.path);
+        console.log('[Docs Generation] Git diff - baseline:', baselineDiff);
+        console.log('[Docs Generation] Git diff - after:', afterDiff);
 
         // Calculate new files (not in baseline)
-        const filesCreated = afterDiff.filesCreated.filter(
+        let filesCreated = afterDiff.filesCreated.filter(
           f => !baselineDiff.filesCreated.includes(f) && !baselineDiff.filesModified.includes(f)
         );
-        const filesModified = afterDiff.filesModified.filter(
+        let filesModified = afterDiff.filesModified.filter(
           f => !baselineDiff.filesModified.includes(f)
         );
+
+        // If no git changes detected, check if AGENTS.md exists (might have been committed already)
+        if (filesCreated.length === 0 && filesModified.length === 0) {
+          const rootAgentsMd = path.join(project.path, 'AGENTS.md');
+          if (existsSync(rootAgentsMd)) {
+            console.log('[Docs Generation] No git changes but AGENTS.md exists, treating as existing');
+            filesModified = ['AGENTS.md'];
+          }
+        }
 
         // Also include any AGENTS.md that are now modified
         const allChanged = [...new Set([...filesCreated, ...filesModified])];
 
         // Store in KBA memory
         const kbaUrl = project.settings.kbaMemoryUrl || DEFAULT_KBA_URL;
-        await storeDocsInKBA(project.name, kbaUrl, filesCreated, filesModified, project.path);
+        console.log('[Docs Generation] Storing in KBA:', { 
+          projectName: project.name, 
+          kbaUrl, 
+          filesCreated, 
+          filesModified,
+          projectPath: project.path
+        });
+        const kbaSuccess = await storeDocsInKBA(project.name, kbaUrl, filesCreated, filesModified, project.path);
+        console.log('[Docs Generation] KBA storage result:', kbaSuccess);
 
         const result: DocsGenerationResult = {
           success: true,
