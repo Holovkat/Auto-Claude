@@ -58,7 +58,8 @@ const initialConfig: IdeationConfig = {
   enabledTypes: [...DEFAULT_IDEATION_CONFIG.enabledTypes] as IdeationType[],
   includeRoadmapContext: DEFAULT_IDEATION_CONFIG.includeRoadmapContext,
   includeKanbanContext: DEFAULT_IDEATION_CONFIG.includeKanbanContext,
-  maxIdeasPerType: DEFAULT_IDEATION_CONFIG.maxIdeasPerType
+  maxIdeasPerType: DEFAULT_IDEATION_CONFIG.maxIdeasPerType,
+  provider: DEFAULT_IDEATION_CONFIG.provider
 };
 
 // Initialize all type states to 'pending' initially (will be set when generation starts)

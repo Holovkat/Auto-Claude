@@ -171,5 +171,14 @@ export const DEFAULT_IDEATION_CONFIG = {
   enabledTypes: ['code_improvements', 'ui_ux_improvements', 'security_hardening'] as const,
   includeRoadmapContext: true,
   includeKanbanContext: true,
-  maxIdeasPerType: 5
+  maxIdeasPerType: 5,
+  provider: 'claude' as const
 };
+
+// Available providers for ideation
+export const IDEATION_PROVIDERS = [
+  { id: 'claude', name: 'Claude', description: 'Anthropic Claude (requires OAuth token)' },
+  { id: 'droid', name: 'Droid', description: 'Factory Droid CLI' },
+  { id: 'gemini', name: 'Gemini', description: 'Google Gemini' },
+  { id: 'openai', name: 'OpenAI', description: 'OpenAI GPT models' },
+] as const;

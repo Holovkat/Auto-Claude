@@ -161,8 +161,17 @@ export class AgentQueueManager {
       args.push('--append');
     }
 
-    // Add provider and model arguments
-    args.push(...this.getProviderArgs());
+    // Add provider from config (overrides app settings) or fall back to app settings
+    if (config.provider) {
+      args.push('--provider', config.provider);
+      // For droid, also set the model
+      if (config.provider === 'droid') {
+        args.push('--model', 'droid');
+      }
+    } else {
+      // Fall back to app settings
+      args.push(...this.getProviderArgs());
+    }
 
     debugLog('[Agent Queue] Spawning ideation process with args:', args);
 

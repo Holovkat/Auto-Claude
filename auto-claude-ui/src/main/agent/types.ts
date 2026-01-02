@@ -38,6 +38,7 @@ export interface IdeationConfig {
   includeKanbanContext: boolean;
   maxIdeasPerType: number;
   append?: boolean;
+  provider?: 'claude' | 'droid' | 'gemini' | 'openai' | 'custom';
 }
 
 export interface TaskExecutionOptions {

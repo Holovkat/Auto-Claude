@@ -52,6 +52,7 @@ export function Ideation({ projectId, onGoToTask }: IdeationProps) {
     handleDeleteSelected,
     handleSelectAll,
     handleEnvConfigured,
+    handleProviderChange,
     getAvailableTypesToAdd,
     handleAddMoreIdeas,
     toggleTypeToAdd,
@@ -94,6 +95,7 @@ export function Ideation({ projectId, onGoToTask }: IdeationProps) {
           onGenerate={handleGenerate}
           onOpenConfig={() => setShowConfigDialog(true)}
           onToggleIdeationType={toggleIdeationType}
+          onProviderChange={handleProviderChange}
         />
 
         <IdeationDialogs

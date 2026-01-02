@@ -3,7 +3,15 @@ import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { Switch } from '../ui/switch';
 import {
-  IDEATION_TYPE_LABELS
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
+import {
+  IDEATION_TYPE_LABELS,
+  IDEATION_PROVIDERS
 } from '../../../shared/constants';
 import type { IdeationType, IdeationConfig } from '../../../shared/types';
 import { TypeIcon } from './TypeIcon';
@@ -16,6 +24,7 @@ interface IdeationEmptyStateProps {
   onGenerate: () => void;
   onOpenConfig: () => void;
   onToggleIdeationType: (type: IdeationType) => void;
+  onProviderChange?: (provider: IdeationConfig['provider']) => void;
 }
 
 export function IdeationEmptyState({
@@ -24,8 +33,11 @@ export function IdeationEmptyState({
   isCheckingToken,
   onGenerate,
   onOpenConfig,
-  onToggleIdeationType
+  onToggleIdeationType,
+  onProviderChange
 }: IdeationEmptyStateProps) {
+  const needsClaudeToken = config.provider === 'claude' && hasToken === false;
+  
   return (
     <div className="flex h-full items-center justify-center">
       <Card className="w-full max-w-lg p-8 text-center">
@@ -35,6 +47,31 @@ export function IdeationEmptyState({
           Generate AI-powered feature ideas based on your project's context,
           existing patterns, and target audience.
         </p>
+
+        {/* Provider Selection */}
+        <div className="mb-4 p-4 bg-muted/50 rounded-lg text-left">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium">AI Provider</span>
+          </div>
+          <Select
+            value={config.provider || 'claude'}
+            onValueChange={(value) => onProviderChange?.(value as IdeationConfig['provider'])}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select provider" />
+            </SelectTrigger>
+            <SelectContent>
+              {IDEATION_PROVIDERS.map((provider) => (
+                <SelectItem key={provider.id} value={provider.id}>
+                  <div className="flex flex-col">
+                    <span>{provider.name}</span>
+                    <span className="text-xs text-muted-foreground">{provider.description}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         {/* Configuration Preview */}
         <div className="mb-6 p-4 bg-muted/50 rounded-lg text-left">
@@ -72,8 +109,8 @@ export function IdeationEmptyState({
           Generate Ideas
         </Button>
 
-        {/* Show warning if token is missing */}
-        {hasToken === false && !isCheckingToken && (
+        {/* Show warning if Claude token is missing and Claude is selected */}
+        {needsClaudeToken && !isCheckingToken && (
           <p className="mt-3 text-sm text-muted-foreground">
             <AlertCircle className="h-4 w-4 inline-block mr-1 text-warning" />
             Claude token not configured. You'll be prompted to enter it when generating.

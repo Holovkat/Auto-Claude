@@ -26,6 +26,7 @@ export interface IdeationConfig {
   includeKanbanContext: boolean;
   maxIdeasPerType: number;
   append?: boolean; // If true, append to existing ideas instead of replacing
+  provider?: 'claude' | 'droid' | 'gemini' | 'openai' | 'custom'; // AI provider to use
 }
 
 export interface IdeaBase {

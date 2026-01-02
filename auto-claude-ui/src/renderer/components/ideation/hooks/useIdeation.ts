@@ -16,7 +16,7 @@ import {
 } from '../../../stores/ideation-store';
 import { loadTasks } from '../../../stores/task-store';
 import { useClaudeTokenCheck } from '../../EnvConfigModal';
-import type { Idea, IdeationType } from '../../../../shared/types';
+import type { Idea, IdeationType, IdeationConfig } from '../../../../shared/types';
 import { ALL_IDEATION_TYPES } from '../constants';
 
 interface UseIdeationOptions {
@@ -48,6 +48,9 @@ export function useIdeation(projectId: string, options: UseIdeationOptions = {})
 
   const { hasToken, isLoading: isCheckingToken, checkToken } = useClaudeTokenCheck();
 
+  // Check if Claude token is needed (only for Claude provider)
+  const needsClaudeToken = config.provider === 'claude' && hasToken === false;
+
   // Set up IPC listeners and load ideation on mount
   useEffect(() => {
     const cleanup = setupIdeationListeners();
@@ -55,8 +58,13 @@ export function useIdeation(projectId: string, options: UseIdeationOptions = {})
     return cleanup;
   }, [projectId]);
 
+  const handleProviderChange = useCallback((provider: IdeationConfig['provider']) => {
+    setConfig({ provider });
+  }, [setConfig]);
+
   const handleGenerate = async () => {
-    if (hasToken === false) {
+    // Only check for Claude token if using Claude provider
+    if (needsClaudeToken) {
       setPendingAction('generate');
       setShowEnvConfigModal(true);
       return;
@@ -65,7 +73,8 @@ export function useIdeation(projectId: string, options: UseIdeationOptions = {})
   };
 
   const handleRefresh = async () => {
-    if (hasToken === false) {
+    // Only check for Claude token if using Claude provider
+    if (needsClaudeToken) {
       setPendingAction('refresh');
       setShowEnvConfigModal(true);
       return;
@@ -103,7 +112,8 @@ export function useIdeation(projectId: string, options: UseIdeationOptions = {})
   const handleAddMoreIdeas = () => {
     if (typesToAdd.length === 0) return;
 
-    if (hasToken === false) {
+    // Only check for Claude token if using Claude provider
+    if (needsClaudeToken) {
       setPendingAction('append');
       setShowEnvConfigModal(true);
       return;
@@ -231,6 +241,7 @@ export function useIdeation(projectId: string, options: UseIdeationOptions = {})
     handleDeleteSelected,
     handleSelectAll,
     handleEnvConfigured,
+    handleProviderChange,
     getAvailableTypesToAdd,
     handleAddMoreIdeas,
     toggleTypeToAdd,
