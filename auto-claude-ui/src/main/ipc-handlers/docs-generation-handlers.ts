@@ -216,8 +216,9 @@ async function storeDocsInKBA(
     const rootAgentsMd = path.join(projectPath, 'AGENTS.md');
     if (existsSync(rootAgentsMd)) {
       const content = readFileSync(rootAgentsMd, 'utf-8');
-      const preview = content.substring(0, 2000);
-      summaryContent += `## Root AGENTS.md Preview\n\n\`\`\`markdown\n${preview}${content.length > 2000 ? '\n...(truncated)' : ''}\n\`\`\`\n`;
+      // Limit to 1500 chars to avoid KBA embedding issues with long content
+      const preview = content.substring(0, 1500);
+      summaryContent += `## Root AGENTS.md Preview\n\n${preview}${content.length > 1500 ? '\n\n...(truncated)' : ''}\n`;
     } else {
       summaryContent += `## Status\nNo AGENTS.md file found at project root.\n`;
     }
@@ -240,16 +241,22 @@ async function storeDocsInKBA(
       return updateRes.ok;
     } else {
       console.log('[Docs Generation] KBA: Creating new note');
+      const notePayload = {
+        collectionId: collection.id,
+        title: noteTitle,
+        content: summaryContent,
+        tags: DOCS_GENERATION_SUMMARY_TAGS
+      };
+      console.log('[Docs Generation] KBA: Note payload:', JSON.stringify(notePayload).substring(0, 500));
       const noteRes = await fetch(`${kbaUrl}/api/notes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          collectionId: collection.id,
-          title: noteTitle,
-          content: summaryContent,
-          tags: DOCS_GENERATION_SUMMARY_TAGS
-        })
+        body: JSON.stringify(notePayload)
       });
+      if (!noteRes.ok) {
+        const errorText = await noteRes.text();
+        console.error('[Docs Generation] KBA: Create failed:', noteRes.status, errorText);
+      }
       console.log('[Docs Generation] KBA: Create result:', noteRes.ok, noteRes.status);
       return noteRes.ok;
     }
