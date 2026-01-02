@@ -106,10 +106,11 @@ export function Context({ projectId }: ContextProps) {
   }, [projectId]);
 
   // Documentation generation handler
-  const handleGenerateDocs = useCallback(async () => {
+  const handleGenerateDocs = useCallback(async (model: string) => {
     setDocsGenerating(true);
+    setDocsMessage(`Generating docs with ${model}...`);
     try {
-      const result = await window.electronAPI.generateDocs(projectId);
+      const result = await window.electronAPI.generateDocs(projectId, model);
       if (!result.success) {
         // Error will be handled by the error event listener
         setDocsGenerating(false);

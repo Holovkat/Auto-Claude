@@ -1,20 +1,35 @@
-import { RefreshCw, AlertCircle, FolderTree, Sparkles, CheckCircle } from 'lucide-react';
+import { useState } from 'react';
+import { RefreshCw, AlertCircle, FolderTree, Sparkles, CheckCircle, ChevronDown } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { ScrollArea } from '../ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu';
 import { cn } from '../../lib/utils';
 import { ServiceCard } from './ServiceCard';
 import { InfoItem } from './InfoItem';
 import type { ProjectIndex } from '../../../shared/types';
+
+const DOCS_MODELS = [
+  { value: 'claude-opus-4-5-20251101', label: 'Claude Opus 4.5' },
+  { value: 'claude-sonnet-4-5-20250929', label: 'Claude Sonnet 4.5' },
+  { value: 'claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5' },
+  { value: 'gemini-3-pro-preview', label: 'Gemini 3 Pro' },
+  { value: 'gemini-3-flash-preview', label: 'Gemini 3 Flash' },
+];
 
 interface ProjectIndexTabProps {
   projectIndex: ProjectIndex | null;
   indexLoading: boolean;
   indexError: string | null;
   onRefresh: () => void;
-  onGenerateDocs?: () => void;
+  onGenerateDocs?: (model: string) => void;
   docsGenerating?: boolean;
   docsMessage?: string | null;
 }
@@ -28,6 +43,9 @@ export function ProjectIndexTab({
   docsGenerating = false,
   docsMessage
 }: ProjectIndexTabProps) {
+  const [selectedModel, setSelectedModel] = useState(DOCS_MODELS[0].value);
+  const selectedModelLabel = DOCS_MODELS.find(m => m.value === selectedModel)?.label || 'Select Model';
+
   return (
     <ScrollArea className="h-full">
       <div className="p-6 space-y-6">
@@ -41,24 +59,53 @@ export function ProjectIndexTab({
           </div>
           <div className="flex items-center gap-2">
             {onGenerateDocs && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onGenerateDocs}
-                    disabled={docsGenerating || indexLoading}
-                  >
-                    {docsGenerating ? (
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Sparkles className="h-4 w-4 mr-2" />
-                    )}
-                    Generate Docs
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Generate AGENTS.md and README files using AI</TooltipContent>
-              </Tooltip>
+              <div className="flex items-center">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onGenerateDocs(selectedModel)}
+                      disabled={docsGenerating || indexLoading}
+                      className="rounded-r-none border-r-0"
+                    >
+                      {docsGenerating ? (
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-4 w-4 mr-2" />
+                      )}
+                      Generate Docs
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Generate AGENTS.md and README files using AI</TooltipContent>
+                </Tooltip>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={docsGenerating || indexLoading}
+                      className="rounded-l-none px-2"
+                    >
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {DOCS_MODELS.map((model) => (
+                      <DropdownMenuItem
+                        key={model.value}
+                        onClick={() => setSelectedModel(model.value)}
+                        className={cn(selectedModel === model.value && 'bg-accent')}
+                      >
+                        {model.label}
+                        {selectedModel === model.value && (
+                          <CheckCircle className="h-4 w-4 ml-auto" />
+                        )}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             )}
             <Tooltip>
               <TooltipTrigger asChild>

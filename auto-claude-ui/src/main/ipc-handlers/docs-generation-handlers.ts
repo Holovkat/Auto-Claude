@@ -218,7 +218,7 @@ export function registerDocsGenerationHandlers(
   // Generate documentation
   ipcMain.handle(
     IPC_CHANNELS.DOCS_GENERATE,
-    async (_, projectId: string): Promise<IPCResult<DocsGenerationResult>> => {
+    async (_, projectId: string, modelOverride?: string): Promise<IPCResult<DocsGenerationResult>> => {
       const project = projectStore.getProject(projectId);
       if (!project) {
         return { success: false, error: 'Project not found' };
@@ -250,6 +250,11 @@ export function registerDocsGenerationHandlers(
 
         // Load app settings
         const settings = loadSettings();
+        
+        // Apply model override if provided
+        if (modelOverride) {
+          settings.providerModel = modelOverride;
+        }
 
         // Write prompt to temp file
         const promptDir = path.join(project.path, '.auto-claude');

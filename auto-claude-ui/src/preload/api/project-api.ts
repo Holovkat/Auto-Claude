@@ -145,8 +145,8 @@ export const createProjectAPI = (): ProjectAPI => ({
     ipcRenderer.invoke(IPC_CHANNELS.KBA_DELETE_NOTE, projectId, noteId),
 
   // Documentation Generation
-  generateDocs: (projectId: string): Promise<IPCResult<{ filesCreated: string[]; filesModified: string[]; summary: string }>> =>
-    ipcRenderer.invoke(IPC_CHANNELS.DOCS_GENERATE, projectId),
+  generateDocs: (projectId: string, model?: string): Promise<IPCResult<{ filesCreated: string[]; filesModified: string[]; summary: string }>> =>
+    ipcRenderer.invoke(IPC_CHANNELS.DOCS_GENERATE, projectId, model),
 
   getDocsChanges: (projectId: string): Promise<IPCResult<{ filesCreated: string[]; filesModified: string[] }>> =>
     ipcRenderer.invoke(IPC_CHANNELS.DOCS_GET_CHANGES, projectId),

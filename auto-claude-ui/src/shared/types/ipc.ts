@@ -284,7 +284,7 @@ export interface ElectronAPI {
   deleteKBANote: (projectId: string, noteId: string) => Promise<IPCResult>;
 
   // Documentation generation operations
-  generateDocs: (projectId: string) => Promise<IPCResult<DocsGenerationResult>>;
+  generateDocs: (projectId: string, model?: string) => Promise<IPCResult<DocsGenerationResult>>;
   getDocsChanges: (projectId: string) => Promise<IPCResult<DocsChangesResult>>;
 
   // Environment configuration operations
