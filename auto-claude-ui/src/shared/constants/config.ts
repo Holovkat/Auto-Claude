@@ -22,6 +22,13 @@ export const DEFAULT_APP_SETTINGS = {
     onReviewNeeded: true,
     sound: false
   },
+  // Provider settings
+  activeProvider: 'claude' as const,
+  providerModel: 'claude-opus-4-5-20251101',
+  customCliTemplate: 'droid exec --model {model} --output-format stream-json --input-format stream-json --auto low',
+  customCliWorkDir: undefined as string | undefined,
+  customCliTokenEnvName: 'DROID_API_KEY',
+  customCliTokenValue: undefined as string | undefined,
   // Global API keys (used as defaults for all projects)
   globalClaudeOAuthToken: undefined as string | undefined,
   globalOpenAIApiKey: undefined as string | undefined,

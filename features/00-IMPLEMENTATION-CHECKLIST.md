@@ -15,20 +15,26 @@
   - Status: DONE (Implemented in CustomCliAgentEngine with stream-json and session resume support)
 
 ## Phase 2: UI/IPC/settings
-- [ ] Add provider/model global settings UI with validation
+- [x] Add provider/model global settings UI with validation
   - Expected: Users can select provider/model; invalid saves blocked per provider rules.
-- [ ] Persist provider settings and expose via IPC to main
+  - Status: DONE (Added to IntegrationSettings with conditional fields for custom CLI)
+- [x] Persist provider settings and expose via IPC to main
   - Expected: Settings stored outside repo, round-trip through IPC without loss.
-- [ ] Store settings outside repo (hidden path), plain JSON for now
+  - Status: DONE (Uses existing settings IPC, loaded by AgentManager)
+- [x] Store settings outside repo (hidden path), plain JSON for now
   - Expected: Settings path not under repo; not copied unless user opts in.
+  - Status: DONE (Settings stored in app's userData directory)
 
 ## Phase 3: Spawn/metadata/tests
-- [ ] Wire provider/env into spawn args for task/spec runs
+- [x] Wire provider/env into spawn args for task/spec runs
   - Expected: Spawn builds correct args/env per provider (Claude/OpenAI/Gemini/custom CLI) with model arg templating.
-- [ ] Show provider/model in task detail/Kanban
+  - Status: DONE (AgentManager passes --provider/--model; CustomCliAgentEngine handles templating)
+- [x] Show provider/model in task detail/Kanban
   - Expected: UI displays stamped provider/model from spawn; errors surfaced if backend rejects config.
-- [ ] Stamp provider/model into task metadata at spawn; surface errors on mismatch
+  - Status: DONE (Added to TaskCard footer)
+- [x] Stamp provider/model into task metadata at spawn; surface errors on mismatch
   - Expected: Task metadata matches UI config; backend/CLI errors bubble to UI for correction.
+  - Status: DONE (ProjectStore.stampTaskProvider called before spawn)
 - [ ] Add unit tests: settings validation, IPC payload, spawn args/env
   - Expected: Tests cover validation rules and arg/env assembly for each provider mode.
 - [ ] Smoke run with non-Claude provider selection

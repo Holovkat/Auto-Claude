@@ -717,6 +717,94 @@ export function IntegrationSettings({ settings, onSettingsChange, isOpen }: Inte
           </div>
         )}
 
+        {/* Provider Configuration Section */}
+        <div className="space-y-4 pt-4 border-t border-border">
+          <div className="flex items-center gap-2">
+            <Activity className="h-4 w-4 text-muted-foreground" />
+            <h4 className="text-sm font-semibold text-foreground">Provider Configuration</h4>
+          </div>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="activeProvider" className="text-sm font-medium text-foreground">Active Provider</Label>
+              <select
+                id="activeProvider"
+                className="w-full max-w-md px-3 py-2 bg-background border border-input rounded-md text-sm"
+                value={settings.activeProvider || 'claude'}
+                onChange={(e) => onSettingsChange({ ...settings, activeProvider: e.target.value as any })}
+              >
+                <option value="claude">Claude SDK (Official)</option>
+                <option value="openai">OpenAI / Compatible API</option>
+                <option value="gemini">Google Gemini API</option>
+                <option value="custom">Custom CLI (e.g. Droid)</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="providerModel" className="text-sm font-medium text-foreground">Model Name</Label>
+              <Input
+                id="providerModel"
+                placeholder={settings.activeProvider === 'custom' ? 'e.g. custom:GLM-4.7-[Z.AI-Coding-Plan]-7' : 'e.g. claude-3-5-sonnet-latest'}
+                value={settings.providerModel || ''}
+                onChange={(e) => onSettingsChange({ ...settings, providerModel: e.target.value })}
+                className="max-w-md"
+              />
+            </div>
+
+            {settings.activeProvider === 'custom' && (
+              <div className="space-y-4 pl-4 border-l-2 border-primary/20 mt-4 animate-in fade-in slide-in-from-left-2">
+                <div className="space-y-2">
+                  <Label htmlFor="customCliTemplate" className="text-sm font-medium text-foreground">CLI Command Template</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Available placeholders: <code className="bg-muted px-1 rounded">{'{model}'}</code>, <code className="bg-muted px-1 rounded">{'{projectDir}'}</code>, <code className="bg-muted px-1 rounded">{'{specDir}'}</code>, <code className="bg-muted px-1 rounded">{'{sessionId}'}</code>
+                  </p>
+                  <Input
+                    id="customCliTemplate"
+                    value={settings.customCliTemplate || ''}
+                    onChange={(e) => onSettingsChange({ ...settings, customCliTemplate: e.target.value })}
+                    className="max-w-lg font-mono text-xs"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 max-w-lg">
+                  <div className="space-y-2">
+                    <Label htmlFor="customCliTokenEnvName" className="text-sm font-medium text-foreground">Token Env Var Name</Label>
+                    <Input
+                      id="customCliTokenEnvName"
+                      placeholder="e.g. DROID_API_KEY"
+                      value={settings.customCliTokenEnvName || ''}
+                      onChange={(e) => onSettingsChange({ ...settings, customCliTokenEnvName: e.target.value })}
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="customCliTokenValue" className="text-sm font-medium text-foreground">Token Value</Label>
+                    <Input
+                      id="customCliTokenValue"
+                      type="password"
+                      placeholder="CLI token/key"
+                      value={settings.customCliTokenValue || ''}
+                      onChange={(e) => onSettingsChange({ ...settings, customCliTokenValue: e.target.value })}
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2 max-w-lg">
+                  <Label htmlFor="customCliWorkDir" className="text-sm font-medium text-foreground">Working Directory</Label>
+                  <Input
+                    id="customCliWorkDir"
+                    placeholder="Default to project root"
+                    value={settings.customCliWorkDir || ''}
+                    onChange={(e) => onSettingsChange({ ...settings, customCliWorkDir: e.target.value })}
+                    className="text-sm"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* API Keys Section */}
         <div className="space-y-4 pt-4 border-t border-border">
           <div className="flex items-center gap-2">

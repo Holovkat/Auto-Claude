@@ -27,6 +27,14 @@ export interface AppSettings {
   autoUpdateAutoBuild: boolean;
   autoNameTerminals: boolean;
   notifications: NotificationSettings;
+  // Provider settings
+  activeProvider: 'claude' | 'openai' | 'gemini' | 'custom';
+  providerModel?: string;
+  // Custom CLI settings
+  customCliTemplate?: string;
+  customCliWorkDir?: string;
+  customCliTokenEnvName?: string;
+  customCliTokenValue?: string;
   // Global API keys (used as defaults for all projects)
   globalClaudeOAuthToken?: string;
   globalOpenAIApiKey?: string;

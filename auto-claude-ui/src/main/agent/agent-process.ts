@@ -392,4 +392,20 @@ export class AgentProcessManager {
     
     return { ...autoBuildEnv, ...projectEnv, ...profileEnv };
   }
+
+  /**
+   * Load application settings from disk
+   */
+  loadSettings(): any {
+    const settingsPath = path.join(app.getPath('userData'), 'settings.json');
+    if (existsSync(settingsPath)) {
+      try {
+        const content = readFileSync(settingsPath, 'utf-8');
+        return JSON.parse(content);
+      } catch {
+        return {};
+      }
+    }
+    return {};
+  }
 }

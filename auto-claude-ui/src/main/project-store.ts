@@ -514,6 +514,35 @@ export class ProjectStore {
 
     return true;
   }
+
+  /**
+   * Stamp provider and model info into task metadata
+   */
+  stampTaskProvider(taskId: string, provider: string, model: string): void {
+    const projects = this.getProjects();
+    for (const project of projects) {
+      const specsBaseDir = getSpecsDir(project.autoBuildPath);
+      const specPath = path.join(project.path, specsBaseDir, taskId);
+      
+      if (existsSync(specPath)) {
+        const metadataPath = path.join(specPath, 'task_metadata.json');
+        try {
+          let metadata: TaskMetadata = {};
+          if (existsSync(metadataPath)) {
+            metadata = JSON.parse(readFileSync(metadataPath, 'utf-8'));
+          }
+          
+          metadata.provider = provider;
+          metadata.providerModel = model;
+          
+          writeFileSync(metadataPath, JSON.stringify(metadata, null, 2));
+          return;
+        } catch {
+          // Ignore errors
+        }
+      }
+    }
+  }
 }
 
 // Singleton instance

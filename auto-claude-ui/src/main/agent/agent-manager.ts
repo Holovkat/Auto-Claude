@@ -109,6 +109,9 @@ export class AgentManager extends EventEmitter {
     // spec_runner.py will auto-start run.py after spec creation completes
     const args = [specRunnerPath, '--task', taskDescription, '--project-dir', projectPath];
 
+    // Add provider and model arguments
+    args.push(...this.getProviderArgs());
+
     // Pass spec directory if provided (for UI-created tasks that already have a directory)
     if (specDir) {
       args.push('--spec-dir', specDir);
@@ -125,6 +128,24 @@ export class AgentManager extends EventEmitter {
 
     // Note: This is spec-creation but it chains to task-execution via run.py
     this.processManager.spawnProcess(taskId, autoBuildSource, args, combinedEnv, 'task-execution');
+  }
+
+  /**
+   * Get provider and model arguments from settings
+   */
+  private getProviderArgs(): string[] {
+    const settings = this.processManager.loadSettings();
+    const args: string[] = [];
+    
+    if (settings.activeProvider) {
+      args.push('--provider', settings.activeProvider);
+    }
+    
+    if (settings.providerModel) {
+      args.push('--model', settings.providerModel);
+    }
+    
+    return args;
   }
 
   /**
@@ -155,11 +176,20 @@ export class AgentManager extends EventEmitter {
 
     const args = [runPath, '--spec', specId, '--project-dir', projectPath];
 
+    // Add provider and model arguments
+    args.push(...this.getProviderArgs());
+
     // Always use auto-continue when running from UI (non-interactive)
     args.push('--auto-continue');
 
     // Force: When user starts a task from the UI, that IS their approval
     args.push('--force');
+
+    // Stamp task with provider and model info
+    const settings = this.processManager.loadSettings();
+    if (settings.activeProvider && settings.providerModel) {
+      projectStore.stampTaskProvider(specId, settings.activeProvider, settings.providerModel);
+    }
 
     // Pass base branch if specified (ensures worktrees are created from the correct branch)
     if (options.baseBranch) {
@@ -201,6 +231,9 @@ export class AgentManager extends EventEmitter {
     const combinedEnv = this.processManager.getCombinedEnv(projectPath);
 
     const args = [runPath, '--spec', specId, '--project-dir', projectPath, '--qa'];
+
+    // Add provider and model arguments
+    args.push(...this.getProviderArgs());
 
     this.processManager.spawnProcess(taskId, autoBuildSource, args, combinedEnv, 'qa-process');
   }

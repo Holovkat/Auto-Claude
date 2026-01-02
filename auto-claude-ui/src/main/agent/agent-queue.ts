@@ -73,10 +73,31 @@ export class AgentQueueManager {
       args.push('--competitor-analysis');
     }
 
+    // Add provider and model arguments
+    args.push(...this.getProviderArgs());
+
     debugLog('[Agent Queue] Spawning roadmap process with args:', args);
 
     // Use projectId as taskId for roadmap operations
     this.spawnRoadmapProcess(projectId, projectPath, args);
+  }
+
+  /**
+   * Get provider and model arguments from settings
+   */
+  private getProviderArgs(): string[] {
+    const settings = this.processManager.loadSettings();
+    const args: string[] = [];
+    
+    if (settings.activeProvider) {
+      args.push('--provider', settings.activeProvider);
+    }
+    
+    if (settings.providerModel) {
+      args.push('--model', settings.providerModel);
+    }
+    
+    return args;
   }
 
   /**
@@ -139,6 +160,9 @@ export class AgentQueueManager {
     if (config.append) {
       args.push('--append');
     }
+
+    // Add provider and model arguments
+    args.push(...this.getProviderArgs());
 
     debugLog('[Agent Queue] Spawning ideation process with args:', args);
 

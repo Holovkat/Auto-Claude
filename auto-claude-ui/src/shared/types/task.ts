@@ -211,6 +211,8 @@ export interface TaskMetadata {
   // Agent configuration (from agent profile or manual selection)
   model?: ModelType;  // Claude model to use (haiku, sonnet, opus)
   thinkingLevel?: ThinkingLevel;  // Thinking budget level (none, low, medium, high, ultrathink)
+  provider?: string;  // Provider identifier (claude, openai, gemini, custom)
+  providerModel?: string;  // Full model name string
 
   // Archive status
   archivedAt?: string;  // ISO date when task was archived

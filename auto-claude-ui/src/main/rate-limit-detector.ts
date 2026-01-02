@@ -218,6 +218,12 @@ export function getProfileEnv(profileId?: string): Record<string, string> {
     console.warn('[getProfileEnv] Added OLLAMA_BASE_URL to environment:', globalSettings.globalOllamaBaseUrl);
   }
 
+  // Add Custom CLI token if configured
+  if (globalSettings.activeProvider === 'custom' && globalSettings.customCliTokenEnvName && globalSettings.customCliTokenValue) {
+    env[globalSettings.customCliTokenEnvName] = globalSettings.customCliTokenValue;
+    console.warn(`[getProfileEnv] Added custom CLI token to env: ${globalSettings.customCliTokenEnvName}`);
+  }
+
   // If profile exists, handle Claude auth
   if (profile) {
     // Prefer OAuth token (instant switching, no browser auth needed)

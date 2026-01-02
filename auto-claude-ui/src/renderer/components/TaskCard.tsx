@@ -309,9 +309,17 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
 
         {/* Footer */}
         <div className="mt-4 flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Clock className="h-3 w-3" />
-            <span>{formatRelativeTime(task.updatedAt)}</span>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Clock className="h-3 w-3" />
+              <span>{formatRelativeTime(task.updatedAt)}</span>
+            </div>
+            {task.metadata?.provider && (
+              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground italic">
+                <Activity className="h-2.5 w-2.5" />
+                <span>{task.metadata.provider}: {task.metadata.providerModel || task.metadata.model || 'default'}</span>
+              </div>
+            )}
           </div>
 
           {/* Action buttons */}
