@@ -25,7 +25,7 @@ export const DEFAULT_APP_SETTINGS = {
   // Provider settings
   activeProvider: 'claude' as const,
   providerModel: 'claude-opus-4-5-20251101',
-  customCliTemplate: 'droid exec --model {model} --output-format stream-json --input-format stream-json --auto low',
+  customCliTemplate: 'droid exec --model {model} --output-format stream-json --auto high',
   customCliWorkDir: undefined as string | undefined,
   customCliTokenEnvName: 'DROID_API_KEY',
   customCliTokenValue: undefined as string | undefined,

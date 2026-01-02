@@ -938,7 +938,14 @@ class CustomCliAgentEngine(BaseAgentEngine):
             
             filtered_args.append(arg)
         args = filtered_args
-        is_streaming = "stream-json" in template
+        
+        # Detect streaming mode - but DON'T use stdin for Droid CLI
+        # Droid's --input-format stream-json is deprecated and doesn't work well
+        # Instead, always pass prompt as positional argument
+        is_output_streaming = "stream-json" in template and "--output-format" in template
+        
+        # Always append prompt as positional argument for Droid CLI
+        args.append(self.prompt)
         
         # Log the command being executed for debugging
         print(f"\n[CustomCliEngine] Executing: {cmd_str}")
@@ -947,25 +954,14 @@ class CustomCliAgentEngine(BaseAgentEngine):
         cwd = os.environ.get("AUTO_CLAUDE_CUSTOM_CLI_WORKDIR") or self.options.cwd
         
         try:
-            yield AssistantMessage(f"> [Custom CLI] Executing: {cmd_str}\n")
+            yield AssistantMessage(f"> [Custom CLI] Executing: {' '.join(args)}\n")
             
-            if not is_streaming:
-                args.append(self.prompt)
-                
             process = await asyncio.create_subprocess_exec(
                 *args,
-                stdin=asyncio.subprocess.PIPE if is_streaming else None,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 cwd=cwd
             )
-            
-            if is_streaming:
-                # Send multi-turn compatible JSONL to stdin
-                input_data = json.dumps({"role": "user", "content": self.prompt}) + "\n"
-                process.stdin.write(input_data.encode())
-                await process.stdin.drain()
-                process.stdin.close()
 
             # Process stdout line by line
             while True:
@@ -977,7 +973,7 @@ class CustomCliAgentEngine(BaseAgentEngine):
                 if not line_str:
                     continue
                     
-                if is_streaming or "--output-format json" in template:
+                if is_output_streaming or "--output-format json" in template:
                     try:
                         data = json.loads(line_str)
                         if isinstance(data, dict):
