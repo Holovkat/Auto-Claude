@@ -7,10 +7,18 @@ Utilities for reading and parsing project configuration files
 """
 
 import json
+import sys
 from pathlib import Path
 from typing import Optional
 
-import tomllib
+# tomllib is only available in Python 3.11+, use tomli as fallback
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    try:
+        import tomli as tomllib
+    except ImportError:
+        tomllib = None  # type: ignore
 
 
 class ConfigParser:
@@ -35,10 +43,12 @@ class ConfigParser:
 
     def read_toml(self, filename: str) -> Optional[dict]:
         """Read a TOML file from project root."""
+        if tomllib is None:
+            return None
         try:
             with open(self.project_dir / filename, "rb") as f:
                 return tomllib.load(f)
-        except (FileNotFoundError, tomllib.TOMLDecodeError):
+        except (FileNotFoundError, Exception):
             return None
 
     def read_text(self, filename: str) -> Optional[str]:
