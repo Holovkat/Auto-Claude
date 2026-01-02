@@ -8,6 +8,7 @@ import { app } from 'electron';
 import path from 'path';
 
 import { getClaudeProfileManager } from './claude-profile-manager';
+import { DEFAULT_APP_SETTINGS } from '../shared/constants';
 
 /**
  * Regex pattern to detect Claude Code rate limit messages
@@ -159,7 +160,7 @@ export function getProfileEnv(profileId?: string): Record<string, string> {
 
   // Load global API keys for non-Claude models (ALWAYS load these, regardless of profile)
   const settingsPath = path.join(app.getPath('userData'), 'settings.json');
-  let globalSettings: any = {};
+  let globalSettings: any = { ...DEFAULT_APP_SETTINGS };
   
   console.warn('[getProfileEnv] Loading settings from:', settingsPath);
   console.warn('[getProfileEnv] Settings file exists:', existsSync(settingsPath));

@@ -9,6 +9,7 @@ import { ProcessType, ExecutionProgressData } from './types';
 import { detectRateLimit, createSDKRateLimitInfo, getProfileEnv } from '../rate-limit-detector';
 import { projectStore } from '../project-store';
 import { getClaudeProfileManager } from '../claude-profile-manager';
+import { DEFAULT_APP_SETTINGS } from '../../shared/constants';
 
 /**
  * Process spawning and lifecycle management
@@ -398,14 +399,16 @@ export class AgentProcessManager {
    */
   loadSettings(): any {
     const settingsPath = path.join(app.getPath('userData'), 'settings.json');
+    let settings = { ...DEFAULT_APP_SETTINGS };
+    
     if (existsSync(settingsPath)) {
       try {
         const content = readFileSync(settingsPath, 'utf-8');
-        return JSON.parse(content);
+        settings = { ...settings, ...JSON.parse(content) };
       } catch {
-        return {};
+        // Use defaults
       }
     }
-    return {};
+    return settings;
   }
 }

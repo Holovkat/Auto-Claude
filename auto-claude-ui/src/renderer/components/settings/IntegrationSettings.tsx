@@ -735,9 +735,15 @@ export function IntegrationSettings({ settings, onSettingsChange, isOpen }: Inte
                   const newProvider = e.target.value as any;
                   const updates: Partial<AppSettings> = { activeProvider: newProvider };
                   
-                  // Auto-suggest Droid model if switching to custom
+                  // Auto-suggest defaults based on provider
                   if (newProvider === 'custom' && !settings.providerModel) {
                     updates.providerModel = 'custom:GLM-4.7-[Z.AI-Coding-Plan]-7';
+                  } else if (newProvider === 'openai' && !settings.providerModel) {
+                    updates.providerModel = 'gpt-4o';
+                  } else if (newProvider === 'gemini' && !settings.providerModel) {
+                    updates.providerModel = 'gemini-1.5-pro';
+                  } else if (newProvider === 'claude') {
+                    updates.providerModel = 'claude-3-5-sonnet-latest';
                   }
                   
                   onSettingsChange({ ...settings, ...updates });
@@ -754,7 +760,12 @@ export function IntegrationSettings({ settings, onSettingsChange, isOpen }: Inte
               <Label htmlFor="providerModel" className="text-sm font-medium text-foreground">Model Name</Label>
               <Input
                 id="providerModel"
-                placeholder={settings.activeProvider === 'custom' ? 'e.g. custom:GLM-4.7-[Z.AI-Coding-Plan]-7' : 'e.g. claude-3-5-sonnet-latest'}
+                placeholder={
+                  settings.activeProvider === 'custom' ? 'e.g. custom:GLM-4.7-[Z.AI-Coding-Plan]-7' : 
+                  settings.activeProvider === 'openai' ? 'e.g. gpt-4o' :
+                  settings.activeProvider === 'gemini' ? 'e.g. gemini-1.5-pro' :
+                  'e.g. claude-3-5-sonnet-latest'
+                }
                 value={settings.providerModel || ''}
                 onChange={(e) => onSettingsChange({ ...settings, providerModel: e.target.value })}
                 className="max-w-md"
@@ -763,6 +774,23 @@ export function IntegrationSettings({ settings, onSettingsChange, isOpen }: Inte
 
             {settings.activeProvider === 'custom' && (
               <div className="space-y-4 pl-4 border-l-2 border-primary/20 mt-4 animate-in fade-in slide-in-from-left-2">
+                <div className="flex items-center justify-between max-w-lg">
+                  <Label className="text-sm font-medium text-foreground">Quick Setup</Label>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => onSettingsChange({
+                      ...settings,
+                      providerModel: 'custom:GLM-4.7-[Z.AI-Coding-Plan]-7',
+                      customCliTemplate: 'droid exec "{model}" --project-dir "{projectDir}" --spec-dir "{specDir}" --session-id "{sessionId}" --output-format json --stream-json',
+                      customCliTokenEnvName: 'DROID_API_KEY',
+                    })}
+                    className="h-7 text-xs"
+                  >
+                    Setup Droid CLI
+                  </Button>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="customCliTemplate" className="text-sm font-medium text-foreground">CLI Command Template</Label>
                   <p className="text-xs text-muted-foreground">

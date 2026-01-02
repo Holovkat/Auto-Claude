@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Play, Square, Clock, Zap, Target, Shield, Gauge, Palette, FileCode, Bug, Wrench, Loader2, AlertTriangle, RotateCcw, Archive } from 'lucide-react';
+import { Play, Square, Clock, Zap, Target, Shield, Gauge, Palette, FileCode, Bug, Wrench, Loader2, AlertTriangle, RotateCcw, Archive, Activity, Key } from 'lucide-react';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -315,9 +315,24 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
               <span>{formatRelativeTime(task.updatedAt)}</span>
             </div>
             {task.metadata?.provider && (
-              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground italic">
-                <Activity className="h-2.5 w-2.5" />
-                <span>{task.metadata.provider}: {task.metadata.providerModel || task.metadata.model || 'default'}</span>
+              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                <div className={cn(
+                  "flex h-4 items-center gap-1 px-1.5 rounded-full border border-border/50",
+                  task.metadata.provider === 'claude' ? "bg-amber-500/10 text-amber-500" :
+                  task.metadata.provider === 'custom' ? "bg-info/10 text-info" :
+                  "bg-muted text-muted-foreground"
+                )}>
+                  {task.metadata.provider === 'claude' ? (
+                    <span className="font-bold">C</span>
+                  ) : task.metadata.provider === 'custom' ? (
+                    <Activity className="h-2.5 w-2.5" />
+                  ) : (
+                    <Key className="h-2.5 w-2.5" />
+                  )}
+                  <span className="truncate max-w-[120px] font-medium">
+                    {task.metadata.providerModel || task.metadata.model || 'default'}
+                  </span>
+                </div>
               </div>
             )}
           </div>
