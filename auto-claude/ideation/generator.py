@@ -57,11 +57,13 @@ class IdeationGenerator:
         project_dir: Path,
         output_dir: Path,
         model: str = "claude-opus-4-5-20251101",
+        provider: str | None = None,
         max_ideas_per_type: int = 5,
     ):
         self.project_dir = Path(project_dir)
         self.output_dir = Path(output_dir)
         self.model = model
+        self.provider = provider
         self.max_ideas_per_type = max_ideas_per_type
         self.prompts_dir = Path(__file__).parent.parent / "prompts"
 
@@ -88,7 +90,9 @@ class IdeationGenerator:
             prompt += f"\n{additional_context}\n"
 
         # Create client
-        client = create_client(self.project_dir, self.output_dir, self.model)
+        client = create_client(
+            self.project_dir, self.output_dir, self.model, provider=self.provider
+        )
 
         try:
             async with client:
@@ -176,7 +180,9 @@ Common fixes:
 Write the fixed JSON to the file now.
 """
 
-        client = create_client(self.project_dir, self.output_dir, self.model)
+        client = create_client(
+            self.project_dir, self.output_dir, self.model, provider=self.provider
+        )
 
         try:
             async with client:

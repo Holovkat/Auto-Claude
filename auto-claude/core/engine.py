@@ -8,6 +8,8 @@ Supports different LLM providers (Claude SDK, Gemini API, etc.)
 
 import os
 import sys
+import shlex
+import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -27,6 +29,7 @@ class AgentOptions:
     model: str
     system_prompt: str
     provider: Optional[str] = None
+    spec_dir: Optional[str] = None
     allowed_tools: List[str] = field(default_factory=list)
     mcp_servers: Dict[str, Any] = field(default_factory=dict)
     hooks: Dict[str, List[Any]] = field(default_factory=dict)
@@ -854,24 +857,128 @@ class OpenAIAgentEngine(BaseAgentEngine):
 
 
 class CustomCliAgentEngine(BaseAgentEngine):
-    """Placeholder engine for custom CLI providers (e.g., Droid)."""
+    """Engine for custom CLI providers (e.g., Droid)."""
 
     def __init__(self, options: AgentOptions):
         super().__init__(options)
-        self._warned = False
+        self.prompt = ""
+        self.session_id = None
+        self._load_session_id()
+
+    def _load_session_id(self):
+        if not self.options.spec_dir:
+            return
+        
+        session_file = Path(self.options.spec_dir) / ".droid_session_id"
+        if session_file.exists():
+            try:
+                self.session_id = session_file.read_text().strip()
+            except Exception:
+                pass
+
+    def _save_session_id(self, session_id):
+        if not self.options.spec_dir or not session_id:
+            return
+        
+        self.session_id = session_id
+        session_file = Path(self.options.spec_dir) / ".droid_session_id"
+        try:
+            session_file.write_text(session_id)
+        except Exception:
+            pass
 
     async def query(self, message: str) -> None:
-        if not self._warned:
-            print("Custom CLI provider not yet wired in engine; integrate CLI adapter for queries.")
-            self._warned = True
+        self.prompt = message
 
     def set_system_prompt(self, prompt: str) -> None:
-        return None
+        pass
 
     async def receive_response(self) -> AsyncIterator[Any]:
-        if False:
-            yield None  # pragma: no cover
-        return
+        @dataclass
+        class TextBlock:
+            text: str
+
+        class AssistantMessage:
+            def __init__(self, text: str):
+                self.content = [TextBlock(text=text)]
+
+        # Get template from env or default to droid exec with stream-json
+        template = os.environ.get("AUTO_CLAUDE_CUSTOM_CLI_TEMPLATE", 
+            "droid exec --model {model} --output-format stream-json --input-format stream-json --auto low"
+        )
+        
+        # Use provided model or default for testing
+        model = self.options.model or "custom:GLM-4.7-[Z.AI-Coding-Plan]-7"
+        
+        # Auto-inject session id if not in template but available
+        if self.session_id and "{sessionId}" not in template and "-s" not in template:
+            template += " -s {sessionId}"
+            
+        cmd_str = template.format(
+            model=model,
+            projectDir=self.options.cwd or ".",
+            specDir=self.options.spec_dir or ".",
+            sessionId=self.session_id or ""
+        )
+        
+        args = shlex.split(cmd_str)
+        is_streaming = "stream-json" in template
+        
+        try:
+            if not is_streaming:
+                args.append(self.prompt)
+                
+            process = await asyncio.create_subprocess_exec(
+                *args,
+                stdin=asyncio.subprocess.PIPE if is_streaming else None,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                cwd=self.options.cwd
+            )
+            
+            if is_streaming:
+                # Send multi-turn compatible JSONL to stdin
+                input_data = json.dumps({"role": "user", "content": self.prompt}) + "\n"
+                process.stdin.write(input_data.encode())
+                await process.stdin.drain()
+                process.stdin.close()
+
+            # Process stdout line by line
+            while True:
+                line = await process.stdout.readline()
+                if not line:
+                    break
+                
+                line_str = line.decode().strip()
+                if not line_str:
+                    continue
+                    
+                if is_streaming or "--output-format json" in template:
+                    try:
+                        data = json.loads(line_str)
+                        if isinstance(data, dict):
+                            if "session_id" in data:
+                                self._save_session_id(data["session_id"])
+                            
+                            # Surface content/message/text
+                            content = data.get("content") or data.get("message") or data.get("text")
+                            if content:
+                                yield AssistantMessage(content)
+                        else:
+                            yield AssistantMessage(line_str)
+                    except json.JSONDecodeError:
+                        yield AssistantMessage(line_str)
+                else:
+                    yield AssistantMessage(line_str)
+
+            await process.wait()
+            if process.returncode != 0:
+                stderr_data = await process.stderr.read()
+                if stderr_data:
+                    yield AssistantMessage(f"\n[CLI Error]: {stderr_data.decode().strip()}")
+
+        except Exception as e:
+            yield AssistantMessage(f"Error running custom CLI: {str(e)}")
 
     async def cleanup(self) -> None:
-        return None
+        pass

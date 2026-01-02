@@ -27,11 +27,13 @@ class RoadmapOrchestrator:
         project_dir: Path,
         output_dir: Path | None = None,
         model: str = "claude-opus-4-5-20251101",
+        provider: str | None = None,
         refresh: bool = False,
         enable_competitor_analysis: bool = False,
     ):
         self.project_dir = Path(project_dir)
         self.model = model
+        self.provider = provider
         self.refresh = refresh
         self.enable_competitor_analysis = enable_competitor_analysis
 
@@ -53,6 +55,7 @@ class RoadmapOrchestrator:
             self.output_dir,
             self.model,
             create_client,
+            provider=self.provider,
         )
 
         # Initialize phase handlers

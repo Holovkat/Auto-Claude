@@ -72,10 +72,12 @@ class AgentExecutor:
         output_dir: Path,
         model: str,
         create_client_func,
+        provider: str | None = None,
     ):
         self.project_dir = project_dir
         self.output_dir = output_dir
         self.model = model
+        self.provider = provider
         self.create_client = create_client_func
         # Go up from roadmap/ -> runners/ -> auto-claude/prompts/
         self.prompts_dir = Path(__file__).parent.parent.parent / "prompts"
@@ -120,11 +122,14 @@ class AgentExecutor:
         # Create client
         debug(
             "roadmap_executor",
-            "Creating Claude client",
+            "Creating client",
             project_dir=str(self.project_dir),
             model=self.model,
+            provider=self.provider,
         )
-        client = self.create_client(self.project_dir, self.output_dir, self.model)
+        client = self.create_client(
+            self.project_dir, self.output_dir, self.model, provider=self.provider
+        )
 
         try:
             async with client:

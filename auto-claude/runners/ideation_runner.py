@@ -100,6 +100,13 @@ def main():
         help="Model to use (default: claude-opus-4-5-20251101)",
     )
     parser.add_argument(
+        "--provider",
+        type=str,
+        default=None,
+        choices=["claude", "openai", "gemini", "custom"],
+        help="Model provider to use",
+    )
+    parser.add_argument(
         "--refresh",
         action="store_true",
         help="Force regeneration even if ideation exists",
@@ -136,6 +143,7 @@ def main():
         include_kanban_context=not args.no_kanban,
         max_ideas_per_type=args.max_ideas,
         model=args.model,
+        provider=args.provider,
         refresh=args.refresh,
         append=args.append,
     )

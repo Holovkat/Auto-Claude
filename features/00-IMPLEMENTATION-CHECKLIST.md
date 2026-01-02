@@ -7,12 +7,12 @@
 - [x] Backend: provider enum + auth gating + custom CLI engine stub + tool allowlist sharing
   - Expected: Claude token gated; engines selectable; CLI engine runs without Claude deps; tool lists shared/disabled appropriately.
   - Status: DONE (Claude auth gated; CustomCliAgentEngine placeholder added)
-- [ ] Support custom CLI session flow (capture session_id, resume with -s) and model arg templating
+- [x] Support custom CLI session flow (capture session_id, resume with -s) and model arg templating
   - Expected: First CLI call yields session_id; subsequent calls resume; model passed via provider-specific arg.
-  - Status: TODO
-- [ ] Implement Droid CLI integration specifics: model arg, session resume (-s), stream-json input/output mode
+  - Status: DONE (CustomCliAgentEngine handles templates, session ID persistence, and resume)
+- [x] Implement Droid CLI integration specifics: model arg, session resume (-s), stream-json input/output mode
   - Expected: Droid CLI callable with model `custom:GLM-4.7-[Z.AI-Coding-Plan]-7`, resume supported, optional stream-json usable.
-  - Status: TODO
+  - Status: DONE (Implemented in CustomCliAgentEngine with stream-json and session resume support)
 
 ## Phase 2: UI/IPC/settings
 - [ ] Add provider/model global settings UI with validation

@@ -29,6 +29,7 @@ class AgentRunner:
         project_dir: Path,
         spec_dir: Path,
         model: str,
+        provider: Optional[str] = None,
         task_logger: TaskLogger | None = None,
         verbose: bool = False,
     ):
@@ -38,12 +39,14 @@ class AgentRunner:
             project_dir: The project root directory
             spec_dir: The spec directory
             model: The model to use for agent execution
+            provider: The model provider to use
             task_logger: Optional task logger for tracking progress
             verbose: Whether to enable verbose logging
         """
         self.project_dir = project_dir
         self.spec_dir = spec_dir
         self.model = model
+        self.provider = provider
         self.task_logger = task_logger
         self.verbose = verbose
 
@@ -79,7 +82,14 @@ class AgentRunner:
             prompt += f"\n{additional_context}\n"
 
         # Create client
-        client = create_client(self.project_dir, self.spec_dir, self.model, verbose=self.verbose, cwd=self.project_dir)
+        client = create_client(
+            self.project_dir,
+            self.spec_dir,
+            self.model,
+            verbose=self.verbose,
+            cwd=self.project_dir,
+            provider=self.provider,
+        )
 
         current_tool = None
 

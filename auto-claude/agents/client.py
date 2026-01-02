@@ -329,6 +329,7 @@ def create_client(
         },
         max_turns=1000,
         cwd=str(cwd.resolve()) if cwd else str(spec_dir.resolve()),
+        spec_dir=str(spec_dir.resolve()),
         settings=str(settings_file.resolve()),
         env=sdk_env,
         verbose=verbose,

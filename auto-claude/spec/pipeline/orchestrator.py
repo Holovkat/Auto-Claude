@@ -49,6 +49,7 @@ class SpecOrchestrator:
         spec_dir: Path
         | None = None,  # Use existing spec directory (for UI integration)
         model: str = "claude-opus-4-5-20251101",
+        provider: str | None = None,
         complexity_override: str | None = None,  # Force a specific complexity
         use_ai_assessment: bool = True,  # Use AI for complexity assessment (vs heuristics)
         dev_mode: bool = False,  # Dev mode: specs in gitignored folder, code changes to auto-claude/
@@ -69,6 +70,7 @@ class SpecOrchestrator:
         self.project_dir = Path(project_dir)
         self.task_description = task_description
         self.model = model
+        self.provider = provider
         self.complexity_override = complexity_override
         self.use_ai_assessment = use_ai_assessment
         self.dev_mode = dev_mode
@@ -107,7 +109,12 @@ class SpecOrchestrator:
         if self._agent_runner is None:
             task_logger = get_task_logger(self.spec_dir)
             self._agent_runner = AgentRunner(
-                self.project_dir, self.spec_dir, self.model, task_logger, verbose=self.verbose
+                self.project_dir,
+                self.spec_dir,
+                self.model,
+                provider=self.provider,
+                task_logger=task_logger,
+                verbose=self.verbose,
             )
         return self._agent_runner
 

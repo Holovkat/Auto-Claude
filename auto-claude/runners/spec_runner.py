@@ -158,6 +158,13 @@ Examples:
         help="Model to use for agent phases",
     )
     parser.add_argument(
+        "--provider",
+        type=str,
+        default=None,
+        choices=["claude", "openai", "gemini", "custom"],
+        help="Model provider to use",
+    )
+    parser.add_argument(
         "--no-ai-assessment",
         action="store_true",
         help="Use heuristic complexity assessment instead of AI (faster but less accurate)",
@@ -236,6 +243,7 @@ Examples:
         spec_name=args.continue_spec,
         spec_dir=args.spec_dir,
         model=args.model,
+        provider=args.provider,
         complexity_override=args.complexity,
         use_ai_assessment=not args.no_ai_assessment,
         dev_mode=args.dev,
@@ -298,6 +306,10 @@ Examples:
             # Pass through model if not default
             if args.model != "claude-opus-4-5-20251101":
                 run_cmd.extend(["--model", args.model])
+            
+            # Pass through provider
+            if args.provider:
+                run_cmd.extend(["--provider", args.provider])
             
             # Pass through verbose flag
             if args.verbose:

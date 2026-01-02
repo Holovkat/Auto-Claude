@@ -228,7 +228,9 @@ async def run_qa_validation_loop(
             # Run fixer
             print("\nRunning QA Fixer Agent...")
 
-            fix_client = create_client(project_dir, spec_dir, model)
+            fix_client = create_client(
+                project_dir, spec_dir, model, provider=provider
+            )
 
             async with fix_client:
                 fix_status, fix_response = await run_qa_fixer_session(
