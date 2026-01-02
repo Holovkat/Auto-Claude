@@ -156,22 +156,44 @@ export function registerProjectContextHandlers(
         const analyzerPath = path.join(autoBuildSource, 'analyzer.py');
         const indexOutputPath = path.join(project.path, AUTO_BUILD_PATHS.PROJECT_INDEX);
 
-        // Run analyzer
+        // Get Python path from settings
+        const settingsPath = path.join(
+          process.env.HOME || '',
+          'Library/Application Support/auto-claude-ui/settings.json'
+        );
+        let pythonPath = 'python3';
+        if (existsSync(settingsPath)) {
+          try {
+            const settings = JSON.parse(readFileSync(settingsPath, 'utf-8'));
+            if (settings.pythonPath) {
+              pythonPath = settings.pythonPath;
+            }
+          } catch {
+            // Use default
+          }
+        }
+
+        // Run analyzer from auto-claude directory so imports work
         await new Promise<void>((resolve, reject) => {
-          const proc = spawn('python', [
+          const proc = spawn(pythonPath, [
             analyzerPath,
             '--project-dir', project.path,
             '--output', indexOutputPath
           ], {
-            cwd: project.path,
+            cwd: autoBuildSource,
             env: { ...process.env }
+          });
+
+          let stderr = '';
+          proc.stderr?.on('data', (data) => {
+            stderr += data.toString();
           });
 
           proc.on('close', (code: number) => {
             if (code === 0) {
               resolve();
             } else {
-              reject(new Error(`Analyzer exited with code ${code}`));
+              reject(new Error(`Analyzer exited with code ${code}${stderr ? `: ${stderr}` : ''}`));
             }
           });
 
