@@ -782,7 +782,7 @@ export function IntegrationSettings({ settings, onSettingsChange, isOpen }: Inte
                     onClick={() => onSettingsChange({
                       ...settings,
                       providerModel: 'custom:GLM-4.7-[Z.AI-Coding-Plan]-7',
-                      customCliTemplate: 'droid exec "{model}" --project-dir "{projectDir}" --spec-dir "{specDir}" --session-id "{sessionId}" --output-format json --stream-json',
+                      customCliTemplate: 'droid exec "{model}" --output-format json --stream-json',
                       customCliTokenEnvName: 'DROID_API_KEY',
                     })}
                     className="h-7 text-xs"

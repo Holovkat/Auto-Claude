@@ -910,9 +910,10 @@ class CustomCliAgentEngine(BaseAgentEngine):
         model = self.options.model or "custom:GLM-4.7-[Z.AI-Coding-Plan]-7"
         
         # Auto-inject session id if not in template but available
-        if self.session_id and "{sessionId}" not in template and "-s" not in template:
+        if self.session_id and "{sessionId}" not in template and "-s" not in template and "--session-id" not in template:
             template += " -s {sessionId}"
             
+        # Format command - if sessionId is missing, it will be empty string
         cmd_str = template.format(
             model=model,
             projectDir=self.options.cwd or ".",
@@ -921,6 +922,22 @@ class CustomCliAgentEngine(BaseAgentEngine):
         )
         
         args = shlex.split(cmd_str)
+        
+        # Cleanup: Remove flags with empty values (e.g. --session-id "")
+        filtered_args = []
+        skip_next = False
+        for i, arg in enumerate(args):
+            if skip_next:
+                skip_next = False
+                continue
+            
+            # Check if this is a flag that might have an empty value
+            if arg in ('--session-id', '-s', '--spec-dir', '--project-dir') and i + 1 < len(args) and not args[i+1]:
+                skip_next = True # Skip the empty value too
+                continue
+            
+            filtered_args.append(arg)
+        args = filtered_args
         is_streaming = "stream-json" in template
         
         # Log the command being executed for debugging
