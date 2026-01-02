@@ -6,8 +6,8 @@ Workspace Display
 Functions for displaying workspace information and build summaries.
 """
 
-from ui import (
 from typing import Optional
+from ui import (
     bold,
     error,
     info,

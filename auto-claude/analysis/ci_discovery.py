@@ -26,7 +26,7 @@ import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Optional, Any
 
 # Try to import yaml, fall back gracefully
 try:

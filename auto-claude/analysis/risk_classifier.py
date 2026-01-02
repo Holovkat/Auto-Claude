@@ -24,7 +24,7 @@ Usage:
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Optional, Any
 
 # =============================================================================
 # DATA CLASSES

@@ -13,7 +13,7 @@ Detects authentication and authorization patterns:
 
 import re
 from pathlib import Path
-from typing import Any
+from typing import Optional, Any
 
 from ..base import BaseAnalyzer
 

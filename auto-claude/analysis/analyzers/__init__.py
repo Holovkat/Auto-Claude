@@ -12,7 +12,7 @@ Main exports:
 """
 
 from pathlib import Path
-from typing import Any
+from typing import Optional, Any
 
 from .project_analyzer_module import ProjectAnalyzer
 from .service_analyzer import ServiceAnalyzer

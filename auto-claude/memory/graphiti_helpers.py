@@ -10,7 +10,7 @@ Handles checking if Graphiti is available and managing async operations.
 import asyncio
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Optional, Any
 
 logger = logging.getLogger(__name__)
 

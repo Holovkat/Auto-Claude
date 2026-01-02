@@ -10,6 +10,7 @@ import os
 import sys
 import shlex
 import json
+import asyncio
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path

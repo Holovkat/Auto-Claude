@@ -8,14 +8,21 @@ Functions for creating and configuring the Claude Agent SDK client.
 import json
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Dict, Optional
 
 from auto_claude_tools import (
     create_auto_claude_mcp_server,
     get_allowed_tools,
     is_tools_available,
 )
-from .engine import AgentOptions, BaseAgentEngine, ClaudeAgentEngine, GeminiAgentEngine, OpenAIAgentEngine
+from .engine import (
+    AgentOptions,
+    BaseAgentEngine,
+    ClaudeAgentEngine,
+    GeminiAgentEngine,
+    OpenAIAgentEngine,
+    CustomCliAgentEngine,
+)
 from .auth import get_sdk_env_vars, require_auth_token
 from linear_updater import is_linear_enabled
 from security import bash_security_hook
@@ -132,6 +139,7 @@ def create_client(
     agent_type: str = "coder",
     verbose: bool = False,
     cwd: Optional[Path] = None,
+    provider: Optional[str] = None,
 ) -> BaseAgentEngine:
     """
     Create a Claude Agent SDK client with multi-layered security.
@@ -143,9 +151,10 @@ def create_client(
         agent_type: Type of agent - 'planner', 'coder', 'qa_reviewer', or 'qa_fixer'
                    This determines which custom auto-claude tools are available.
         verbose: Whether to enable verbose logging
+        provider: Model provider to use
 
     Returns:
-        Configured ClaudeSDKClient
+        Configured Agent Engine
 
     Security layers (defense in depth):
     1. Sandbox - OS-level bash command isolation prevents filesystem escape
@@ -154,12 +163,14 @@ def create_client(
        (see security.py for ALLOWED_COMMANDS)
     4. Tool filtering - Each agent type only sees relevant tools (prevents misuse)
     """
-    oauth_token = require_auth_token()
-    # Ensure SDK can access it via its expected env var
-    os.environ["CLAUDE_CODE_OAUTH_TOKEN"] = oauth_token
+    provider_name = (provider or "claude").lower()
 
-    # Collect env vars to pass to SDK (ANTHROPIC_BASE_URL, etc.)
-    sdk_env = get_sdk_env_vars()
+    # Claude auth only when provider is Claude
+    sdk_env: Dict[str, str] = {}
+    if provider_name == "claude":
+        oauth_token = require_auth_token()
+        os.environ["CLAUDE_CODE_OAUTH_TOKEN"] = oauth_token
+        sdk_env = get_sdk_env_vars()
 
     # Check if Linear integration is enabled
     linear_enabled = is_linear_enabled()
@@ -301,14 +312,15 @@ def create_client(
         model=model,
         system_prompt=(
             f"You are an expert full-stack developer building production-quality software. "
-            f"Your working directory is: {project_dir.resolve()}\n"
+            f"Your working directory is: {project_dir.resolve()}\\n"
             f"Your filesystem access is RESTRICTED to this directory only. "
             f"Use relative paths (starting with ./) for all file operations. "
-            f"Never use absolute paths or try to access files outside your working directory.\n\n"
+            f"Never use absolute paths or try to access files outside your working directory.\\n\\n"
             f"You follow existing code patterns, write clean maintainable code, and verify "
             f"your work through thorough testing. You communicate progress through Git commits "
             f"and build-progress.txt updates."
         ),
+        provider=provider_name,
         allowed_tools=get_allowed_tools(agent_type),
         mcp_servers=mcp_servers,
         hooks={
@@ -318,14 +330,26 @@ def create_client(
         },
         max_turns=1000,
         cwd=str(cwd.resolve()) if cwd else str(spec_dir.resolve()),
+        spec_dir=str(spec_dir.resolve()),
         settings=str(settings_file.resolve()),
         env=sdk_env,
         verbose=verbose,
     )
 
-    if model.startswith("gemini"):
+    model_lower = model.lower()
+
+    # Provider-first dispatch
+    if provider_name == "gemini":
         return GeminiAgentEngine(options)
-    elif model.startswith("glm") or model.startswith("ollama") or model.startswith("openai") or model.startswith("z-"):
+    if provider_name == "openai":
+        return OpenAIAgentEngine(options)
+    if provider_name == "custom":
+        return CustomCliAgentEngine(options)
+
+    # Model-based detection for backward compatibility
+    if model_lower.startswith("gemini"):
+        return GeminiAgentEngine(options)
+    elif model_lower.startswith("glm") or model_lower.startswith("ollama") or model_lower.startswith("openai") or model_lower.startswith("z-"):
         return OpenAIAgentEngine(options)
     else:
         return ClaudeAgentEngine(options)

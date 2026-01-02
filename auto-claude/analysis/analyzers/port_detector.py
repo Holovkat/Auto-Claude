@@ -8,7 +8,7 @@ environment files, Docker Compose, configuration files, and scripts.
 
 import re
 from pathlib import Path
-from typing import Any
+from typing import Optional, Any
 
 from .base import BaseAnalyzer
 

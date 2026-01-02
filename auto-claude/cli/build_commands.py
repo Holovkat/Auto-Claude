@@ -56,14 +56,13 @@ def handle_build_command(
     model: str,
     provider: Optional[str],
     max_iterations: Optional[int],
-    max_iterations: int | None,
     verbose: bool,
     force_isolated: bool,
     force_direct: bool,
     auto_continue: bool,
+    skip_qa: bool,
     force_bypass_approval: bool,
     base_branch: Optional[str] = None,
-    base_branch: str | None = None,
 ) -> None:
     """
     Handle the main build command.
