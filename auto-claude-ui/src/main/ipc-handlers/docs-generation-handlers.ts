@@ -215,10 +215,13 @@ async function storeDocsInKBA(
     // Include content preview from README.md if it exists
     const readmePath = path.join(projectPath, 'README.md');
     if (existsSync(readmePath)) {
-      const content = readFileSync(readmePath, 'utf-8');
-      // Limit to 1500 chars to avoid KBA embedding issues with long content
-      const preview = content.substring(0, 1500);
-      summaryContent += `## README.md Preview\n\n${preview}${content.length > 1500 ? '\n\n...(truncated)' : ''}\n`;
+      let content = readFileSync(readmePath, 'utf-8');
+      // Remove markdown tables (cause KBA embedding issues)
+      content = content.replace(/\|[^\n]+\|/g, '');
+      content = content.replace(/\|-+\|/g, '');
+      // Limit to 1200 chars to avoid KBA embedding issues
+      const preview = content.substring(0, 1200).trim();
+      summaryContent += `## README.md Preview\n\n${preview}${content.length > 1200 ? '\n\n...(truncated)' : ''}\n`;
     } else {
       summaryContent += `## Status\nNo README.md file found at project root.\n`;
     }
