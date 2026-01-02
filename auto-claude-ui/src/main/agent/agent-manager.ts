@@ -5,6 +5,7 @@ import { AgentState } from './agent-state';
 import { AgentEvents } from './agent-events';
 import { AgentProcessManager } from './agent-process';
 import { AgentQueueManager } from './agent-queue';
+import { projectStore } from '../project-store';
 import {
   SpecCreationMetadata,
   TaskExecutionOptions,
