@@ -6,6 +6,8 @@ import { debugLog, debugError } from '../../shared/utils/debug-logger';
 
 export type TerminalStatus = 'idle' | 'running' | 'claude-active' | 'exited';
 
+export type AgentType = 'claude' | 'droid' | 'gemini' | 'codex' | 'qwen' | 'cursor';
+
 export interface Terminal {
   id: string;
   title: string;
@@ -13,6 +15,7 @@ export interface Terminal {
   cwd: string;
   createdAt: Date;
   isClaudeMode: boolean;
+  activeAgent?: AgentType;  // Which agent is currently active in this terminal
   claudeSessionId?: string;  // Claude Code session ID for resume
   // outputBuffer removed - now managed by terminalBufferManager singleton
   isRestored?: boolean;  // Whether this terminal was restored from a saved session
@@ -42,6 +45,7 @@ interface TerminalState {
   setActiveTerminal: (id: string | null) => void;
   setTerminalStatus: (id: string, status: TerminalStatus) => void;
   setClaudeMode: (id: string, isClaudeMode: boolean) => void;
+  setActiveAgent: (id: string, agent: AgentType | undefined) => void;
   setClaudeSessionId: (id: string, sessionId: string) => void;
   setAssociatedTask: (id: string, taskId: string | undefined) => void;
   appendOutput: (id: string, data: string) => void;
@@ -162,6 +166,16 @@ export const useTerminalStore = create<TerminalState>((set, get) => ({
       terminals: state.terminals.map((t) =>
         t.id === id
           ? { ...t, isClaudeMode, status: isClaudeMode ? 'claude-active' : 'running' }
+          : t
+      ),
+    }));
+  },
+
+  setActiveAgent: (id: string, agent: AgentType | undefined) => {
+    set((state) => ({
+      terminals: state.terminals.map((t) =>
+        t.id === id
+          ? { ...t, activeAgent: agent, isClaudeMode: !!agent, status: agent ? 'claude-active' : 'running' }
           : t
       ),
     }));

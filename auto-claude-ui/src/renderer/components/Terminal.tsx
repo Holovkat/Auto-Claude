@@ -3,7 +3,7 @@ import { useDroppable } from '@dnd-kit/core';
 import '@xterm/xterm/css/xterm.css';
 import { FileDown } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { useTerminalStore } from '../stores/terminal-store';
+import { useTerminalStore, type AgentType } from '../stores/terminal-store';
 import type { TerminalProps } from './terminal/types';
 import { TerminalHeader } from './terminal/TerminalHeader';
 import { useXterm } from './terminal/useXterm';
@@ -26,6 +26,7 @@ export function Terminal({
 
   const terminal = useTerminalStore((state) => state.terminals.find((t) => t.id === id));
   const setClaudeMode = useTerminalStore((state) => state.setClaudeMode);
+  const setActiveAgent = useTerminalStore((state) => state.setActiveAgent);
   const updateTerminal = useTerminalStore((state) => state.updateTerminal);
   const setAssociatedTask = useTerminalStore((state) => state.setAssociatedTask);
 
@@ -118,8 +119,25 @@ export function Terminal({
 
   const handleInvokeClaude = useCallback(() => {
     setClaudeMode(id, true);
+    setActiveAgent(id, 'claude');
     window.electronAPI.invokeClaudeInTerminal(id, cwd);
-  }, [id, cwd, setClaudeMode]);
+  }, [id, cwd, setClaudeMode, setActiveAgent]);
+
+  const handleInvokeAgent = useCallback((agent: AgentType) => {
+    setActiveAgent(id, agent);
+    // Send the agent command to the terminal
+    const agentCommands: Record<AgentType, string> = {
+      claude: 'claude',
+      droid: 'droid',
+      gemini: 'gemini',
+      codex: 'codex',
+      qwen: 'qwen',
+      cursor: 'cursor-agent',
+    };
+    const command = agentCommands[agent] || agent;
+    window.electronAPI.sendTerminalInput(id, `${command}\r`);
+    updateTerminal(id, { title: agent.charAt(0).toUpperCase() + agent.slice(1) });
+  }, [id, setActiveAgent, updateTerminal]);
 
   const handleClick = useCallback(() => {
     onActivate();
@@ -176,10 +194,12 @@ Please confirm you're ready by saying: I'm ready to work on ${selectedTask.title
         title={terminal?.title || 'Terminal'}
         status={terminal?.status || 'idle'}
         isClaudeMode={terminal?.isClaudeMode || false}
+        activeAgent={terminal?.activeAgent}
         tasks={tasks}
         associatedTask={associatedTask}
         onClose={onClose}
         onInvokeClaude={handleInvokeClaude}
+        onInvokeAgent={handleInvokeAgent}
         onTitleChange={handleTitleChange}
         onTaskSelect={handleTaskSelect}
         onClearTask={handleClearTask}
