@@ -44,38 +44,34 @@ function loadSettings(): AppSettings {
 
 /**
  * Get CLI command based on provider settings
+ * Returns: { command, args, useFileInput } where useFileInput means use -f flag instead of stdin pipe
  */
-function getCliCommand(settings: AppSettings): { command: string; args: string[] } {
+function getCliCommand(settings: AppSettings): { command: string; args: string[]; useFileInput: boolean } {
   const provider = settings.activeProvider || 'claude';
+  const model = settings.providerModel || 'claude-sonnet-4-20250514';
   
   switch (provider) {
     case 'claude':
-      return { command: 'claude', args: ['--print'] };
+      return { command: 'claude', args: ['--print'], useFileInput: false };
     
     case 'custom':
     case 'droid': {
-      // Parse the custom CLI template
-      const template = settings.customCliTemplate || 'droid exec --model {model} --output-format stream-json --auto high';
-      // Remove --output-format stream-json for print mode, and replace {model}
-      const model = settings.providerModel || 'claude-sonnet-4-20250514';
-      let cmd = template
-        .replace('--output-format stream-json', '')
-        .replace('{model}', model)
-        .trim();
-      
-      // For droid, we need to add -p for print mode
-      const parts = cmd.split(' ');
-      return { command: parts[0], args: [...parts.slice(1), '-p'] };
+      // For droid exec, use -f for file input and --auto high for full permissions
+      return { 
+        command: 'droid', 
+        args: ['exec', '--model', model, '--auto', 'high', '-f'],
+        useFileInput: true 
+      };
     }
     
     case 'gemini':
-      return { command: 'gemini', args: ['--print'] };
+      return { command: 'gemini', args: ['--print'], useFileInput: false };
     
     case 'openai':
-      return { command: 'openai', args: ['--print'] };
+      return { command: 'openai', args: ['--print'], useFileInput: false };
     
     default:
-      return { command: 'claude', args: ['--print'] };
+      return { command: 'claude', args: ['--print'], useFileInput: false };
   }
 }
 
@@ -241,9 +237,9 @@ export function registerDocsGenerationHandlers(
 
         // Get CLI command based on provider settings
         const settings = loadSettings();
-        const { command, args } = getCliCommand(settings);
+        const { command, args, useFileInput } = getCliCommand(settings);
 
-        // Write prompt to temp file to avoid command-line length limits
+        // Write prompt to temp file
         const promptDir = path.join(project.path, '.auto-claude');
         const promptFile = path.join(promptDir, '.docs-prompt.md');
         
@@ -252,11 +248,26 @@ export function registerDocsGenerationHandlers(
         }
         writeFileSync(promptFile, AGENTS_MD_PROMPT, 'utf-8');
 
-        // Build the full command with args
-        const fullArgs = args.join(' ');
+        console.log('[Docs Generation] Using provider:', settings.activeProvider || 'claude');
+        console.log('[Docs Generation] Command:', command, args.join(' '));
+
+        // Build spawn args based on provider type
+        let spawnCommand: string;
+        let spawnArgs: string[];
         
-        // Run agent: cat prompt file and pipe to the configured CLI
-        const agentProcess = spawn('sh', ['-c', `cat "${promptFile}" | ${command} ${fullArgs}`], {
+        if (useFileInput) {
+          // For droid: use -f flag directly with file path
+          spawnCommand = command;
+          spawnArgs = [...args, promptFile];
+        } else {
+          // For claude/gemini/openai: pipe via cat
+          spawnCommand = 'sh';
+          spawnArgs = ['-c', `cat "${promptFile}" | ${command} ${args.join(' ')}`];
+        }
+
+        console.log('[Docs Generation] Spawning:', spawnCommand, spawnArgs.join(' '));
+
+        const agentProcess = spawn(spawnCommand, spawnArgs, {
           cwd: project.path,
           env: {
             ...process.env,
@@ -284,13 +295,21 @@ export function registerDocsGenerationHandlers(
         });
 
         agentProcess.stderr?.on('data', (data) => {
-          stderr += data.toString();
+          const chunk = data.toString();
+          stderr += chunk;
+          console.error('[Docs Generation] stderr:', chunk);
         });
 
         // Wait for process to complete
         const exitCode = await new Promise<number | null>((resolve) => {
-          agentProcess.on('close', resolve);
-          agentProcess.on('error', () => resolve(1));
+          agentProcess.on('close', (code) => {
+            console.log('[Docs Generation] Process exited with code:', code);
+            resolve(code);
+          });
+          agentProcess.on('error', (err) => {
+            console.error('[Docs Generation] Process error:', err);
+            resolve(1);
+          });
         });
 
         // Clean up temp file
