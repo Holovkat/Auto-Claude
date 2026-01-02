@@ -160,7 +160,7 @@ Examples:
     parser.add_argument(
         "--provider",
         type=str,
-        default=None,
+        default="claude",
         choices=["claude", "openai", "gemini", "custom"],
         help="Model provider to use",
     )

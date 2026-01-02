@@ -168,7 +168,7 @@ export function getProfileEnv(profileId?: string): Record<string, string> {
   if (existsSync(settingsPath)) {
     try {
       const content = readFileSync(settingsPath, 'utf-8');
-      globalSettings = JSON.parse(content);
+      globalSettings = { ...globalSettings, ...JSON.parse(content) };
       console.warn('[getProfileEnv] Loaded settings keys:', Object.keys(globalSettings));
       console.warn('[getProfileEnv] Has GLM key:', !!globalSettings.globalGLMApiKey);
       console.warn('[getProfileEnv] Has Gemini key:', !!globalSettings.globalGeminiApiKey);

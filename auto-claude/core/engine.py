@@ -530,6 +530,12 @@ class AssistantMessage:
 
         content = []
         
+        # Handle string chunks directly (for CustomCliAgentEngine)
+        if isinstance(self.chunk, str):
+            if self.chunk.strip():
+                content.append(TextBlock(text=self.chunk))
+            return content
+
         # Safely parse parts from the chunk/response
         if hasattr(self.chunk, 'candidates'):
             for candidate in self.chunk.candidates:

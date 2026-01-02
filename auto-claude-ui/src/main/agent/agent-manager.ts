@@ -137,14 +137,20 @@ export class AgentManager extends EventEmitter {
     const settings = this.processManager.loadSettings();
     const args: string[] = [];
     
-    if (settings.activeProvider) {
-      args.push('--provider', settings.activeProvider);
-    }
+    const activeProvider = settings.activeProvider || 'claude';
+    args.push('--provider', activeProvider);
     
     if (settings.providerModel) {
       args.push('--model', settings.providerModel);
+    } else {
+      // Fallback to haiku/sonnet logic if providerModel is missing (old settings)
+      const model = settings.defaultModel === 'opus' ? 'claude-3-opus-20240229' : 
+                    settings.defaultModel === 'sonnet' ? 'claude-3-5-sonnet-latest' : 
+                    'claude-3-5-haiku-latest';
+      args.push('--model', model);
     }
     
+    console.warn(`[AgentManager] Provider args: ${args.join(' ')}`);
     return args;
   }
 
