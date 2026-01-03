@@ -8,7 +8,6 @@ approval or max iterations.
 
 import time as time_module
 from pathlib import Path
-from typing import Optional
 
 from client import create_client
 from linear_updater import (
@@ -19,6 +18,7 @@ from linear_updater import (
     linear_qa_rejected,
     linear_qa_started,
 )
+from pipeline_config import get_max_qa_iterations
 from progress import count_subtasks, is_build_complete
 from task_logger import (
     LogPhase,
@@ -42,7 +42,7 @@ from .report import (
 )
 from .reviewer import run_qa_agent_session
 
-# Configuration
+# Configuration (fallback, overridden by pipeline_config)
 MAX_QA_ITERATIONS = 50
 
 
@@ -55,8 +55,9 @@ async def run_qa_validation_loop(
     project_dir: Path,
     spec_dir: Path,
     model: str,
-    provider: Optional[str] = None,
+    provider: str | None = None,
     verbose: bool = False,
+    is_simple_task: bool = False,
 ) -> bool:
     """
     Run the full QA validation loop.
@@ -71,19 +72,25 @@ async def run_qa_validation_loop(
     - Iteration tracking with detailed history
     - Recurring issue detection (3+ occurrences → human escalation)
     - No-test project handling
+    - Configurable max iterations via .auto-claude/config.json
 
     Args:
         project_dir: Project root directory
         spec_dir: Spec directory
         model: Claude model to use
         verbose: Whether to show detailed output
+        is_simple_task: Whether this is a simple task (uses lower max iterations)
 
     Returns:
         True if QA approved, False otherwise
     """
+    # Get max iterations from config
+    max_iterations = get_max_qa_iterations(project_dir, is_simple_task)
+
     print("\n" + "=" * 70)
     print("  QA VALIDATION LOOP")
     print("  Self-validating quality assurance")
+    print(f"  Max iterations: {max_iterations}")
     print("=" * 70)
 
     # Initialize task logger for the validation phase
@@ -125,18 +132,18 @@ async def run_qa_validation_loop(
 
     qa_iteration = get_qa_iteration_count(spec_dir)
 
-    while qa_iteration < MAX_QA_ITERATIONS:
+    while qa_iteration < max_iterations:
         qa_iteration += 1
         iteration_start = time_module.time()
 
-        print(f"\n--- QA Iteration {qa_iteration}/{MAX_QA_ITERATIONS} ---")
+        print(f"\n--- QA Iteration {qa_iteration}/{max_iterations} ---")
 
         # Run QA reviewer
         client = create_client(project_dir, spec_dir, model, provider=provider)
 
         async with client:
             status, response = await run_qa_agent_session(
-                client, spec_dir, qa_iteration, MAX_QA_ITERATIONS, verbose
+                client, spec_dir, qa_iteration, max_iterations, verbose
             )
 
         iteration_duration = time_module.time() - iteration_start
@@ -220,7 +227,7 @@ async def run_qa_validation_loop(
                 issues_count = len(current_issues)
                 await linear_qa_rejected(spec_dir, issues_count, qa_iteration)
 
-            if qa_iteration >= MAX_QA_ITERATIONS:
+            if qa_iteration >= max_iterations:
                 print("\n⚠️  Maximum QA iterations reached.")
                 print("Escalating to human review.")
                 break
@@ -228,9 +235,7 @@ async def run_qa_validation_loop(
             # Run fixer
             print("\nRunning QA Fixer Agent...")
 
-            fix_client = create_client(
-                project_dir, spec_dir, model, provider=provider
-            )
+            fix_client = create_client(project_dir, spec_dir, model, provider=provider)
 
             async with fix_client:
                 fix_status, fix_response = await run_qa_fixer_session(
@@ -263,7 +268,7 @@ async def run_qa_validation_loop(
     print("\n" + "=" * 70)
     print("  ⚠️  QA VALIDATION INCOMPLETE")
     print("=" * 70)
-    print(f"\nReached maximum iterations ({MAX_QA_ITERATIONS}) without approval.")
+    print(f"\nReached maximum iterations ({max_iterations}) without approval.")
     print("\nRemaining issues require human review:")
 
     # Show iteration summary

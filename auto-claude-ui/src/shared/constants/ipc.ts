@@ -300,5 +300,17 @@ export const IPC_CHANNELS = {
   // Documentation generation events (main -> renderer)
   DOCS_GENERATION_PROGRESS: 'docs:generationProgress',
   DOCS_GENERATION_COMPLETE: 'docs:generationComplete',
-  DOCS_GENERATION_ERROR: 'docs:generationError'
+  DOCS_GENERATION_ERROR: 'docs:generationError',
+
+  // Pipeline configuration operations
+  PIPELINE_CONFIG_GET: 'pipeline:configGet',
+  PIPELINE_CONFIG_SAVE: 'pipeline:configSave',
+
+  // Prompt editor operations
+  PROMPTS_LIST: 'prompts:list',
+  PROMPTS_GET_CONTENT: 'prompts:getContent',
+  PROMPTS_SAVE: 'prompts:save',
+  PROMPTS_SET_ACTIVE_VERSION: 'prompts:setActiveVersion',
+  PROMPTS_DELETE_VERSION: 'prompts:deleteVersion',
+  PROMPTS_GET_FACTORY_DEFAULT: 'prompts:getFactoryDefault'
 } as const;

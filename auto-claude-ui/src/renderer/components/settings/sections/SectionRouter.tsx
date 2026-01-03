@@ -3,6 +3,7 @@ import { SettingsSection } from '../SettingsSection';
 import { GeneralSettings } from '../../project-settings/GeneralSettings';
 import { EnvironmentSettings } from '../../project-settings/EnvironmentSettings';
 import { SecuritySettings } from '../../project-settings/SecuritySettings';
+import { PipelineSettings } from '../../project-settings/PipelineSettings';
 import { LinearIntegration } from '../integrations/LinearIntegration';
 import { GitHubIntegration } from '../integrations/GitHubIntegration';
 import { InitializationGuard } from '../common/InitializationGuard';
@@ -199,6 +200,22 @@ export function SectionRouter({
               expanded={true}
               onToggle={() => {}}
             />
+          </InitializationGuard>
+        </SettingsSection>
+      );
+
+    case 'pipeline':
+      return (
+        <SettingsSection
+          title="Pipeline Settings"
+          description="Configure QA iterations, complexity detection, and phase optimization"
+        >
+          <InitializationGuard
+            initialized={!!project.autoBuildPath}
+            title="Pipeline Settings"
+            description="Configure build pipeline behavior"
+          >
+            <PipelineSettings project={project} />
           </InitializationGuard>
         </SettingsSection>
       );

@@ -23,8 +23,10 @@ import type {
   KBAMemoryStatus,
   KBAMemoryNote,
   DocsGenerationResult,
-  DocsChangesResult
+  DocsChangesResult,
+  PipelineConfig
 } from './project';
+import type { PromptInfo } from './prompts';
 import type {
   Task,
   TaskStatus,
@@ -527,6 +529,18 @@ export interface ElectronAPI {
   detectMainBranch: (projectPath: string) => Promise<IPCResult<string | null>>;
   checkGitStatus: (projectPath: string) => Promise<IPCResult<GitStatus>>;
   initializeGit: (projectPath: string) => Promise<IPCResult<InitializationResult>>;
+
+  // Pipeline configuration operations
+  getPipelineConfig: (projectPath: string) => Promise<IPCResult<PipelineConfig>>;
+  savePipelineConfig: (projectPath: string, config: PipelineConfig) => Promise<IPCResult>;
+
+  // Prompt management operations
+  listPrompts: (projectPath: string) => Promise<IPCResult<PromptInfo[]>>;
+  getPromptContent: (projectPath: string, promptName: string, version?: string) => Promise<IPCResult<string>>;
+  savePrompt: (projectPath: string, promptName: string, content: string, versionName?: string) => Promise<IPCResult>;
+  setActivePromptVersion: (projectPath: string, promptName: string, version: string) => Promise<IPCResult>;
+  deletePromptVersion: (projectPath: string, promptName: string, version: string) => Promise<IPCResult>;
+  getFactoryPrompt: (promptName: string) => Promise<IPCResult<string>>;
 }
 
 declare global {

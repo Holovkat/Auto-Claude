@@ -30,6 +30,7 @@ import { GitHubIssues } from './components/GitHubIssues';
 import { Changelog } from './components/Changelog';
 import { Worktrees } from './components/Worktrees';
 import { AgentProfiles } from './components/AgentProfiles';
+import { PromptsPage } from './components/prompts';
 import { WelcomeScreen } from './components/WelcomeScreen';
 import { RateLimitModal } from './components/RateLimitModal';
 import { SDKRateLimitModal } from './components/SDKRateLimitModal';
@@ -362,6 +363,9 @@ export function App() {
                 )}
                 {activeView === 'agent-profiles' && (
                   <AgentProfiles />
+                )}
+                {activeView === 'prompts' && (
+                  <PromptsPage />
                 )}
                 {activeView === 'agent-tools' && (
                   <div className="flex h-full items-center justify-center">

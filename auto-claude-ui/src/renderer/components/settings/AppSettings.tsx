@@ -13,7 +13,8 @@ import {
   Zap,
   Github,
   Database,
-  Sparkles
+  Sparkles,
+  Gauge
 } from 'lucide-react';
 import {
   FullScreenDialog,
@@ -67,6 +68,7 @@ const appNavItems: NavItem<AppSection>[] = [
 const projectNavItems: NavItem<ProjectSettingsSection>[] = [
   { id: 'general', label: 'General', icon: Settings2, description: 'Auto-Build and agent config' },
   { id: 'claude', label: 'Claude Auth', icon: Key, description: 'Claude authentication' },
+  { id: 'pipeline', label: 'Pipeline', icon: Gauge, description: 'QA, complexity, phases' },
   { id: 'linear', label: 'Linear', icon: Zap, description: 'Linear integration' },
   { id: 'github', label: 'GitHub', icon: Github, description: 'GitHub issues sync' },
   { id: 'memory', label: 'Memory', icon: Database, description: 'Graphiti memory backend' }

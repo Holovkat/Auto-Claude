@@ -19,7 +19,8 @@ import {
   Sparkles,
   GitBranch,
   HelpCircle,
-  UserCog
+  UserCog,
+  ScrollText
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { ScrollArea } from './ui/scroll-area';
@@ -59,7 +60,7 @@ import { GitSetupModal } from './GitSetupModal';
 import { RateLimitIndicator } from './RateLimitIndicator';
 import type { Project, AutoBuildVersionInfo, GitStatus } from '../../shared/types';
 
-export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'agent-profiles';
+export type SidebarView = 'kanban' | 'terminals' | 'roadmap' | 'context' | 'ideation' | 'github-issues' | 'changelog' | 'insights' | 'worktrees' | 'agent-tools' | 'agent-profiles' | 'prompts';
 
 interface SidebarProps {
   onSettingsClick: () => void;
@@ -88,6 +89,7 @@ const projectNavItems: NavItem[] = [
 const toolsNavItems: NavItem[] = [
   { id: 'github-issues', label: 'GitHub Issues', icon: Github, shortcut: 'G' },
   { id: 'worktrees', label: 'Worktrees', icon: GitBranch, shortcut: 'W' },
+  { id: 'prompts', label: 'Prompts', icon: ScrollText, shortcut: 'O' },
   { id: 'agent-profiles', label: 'Agent Profiles', icon: UserCog, shortcut: 'P' }
 ];
 

@@ -3,35 +3,75 @@ Prompt Loading Utilities
 ========================
 
 Functions for loading agent prompts from markdown files.
+Supports project-specific prompt overrides from .auto-claude/prompts/
 """
 
 import json
 from pathlib import Path
 
-# Directory containing prompt files
+# Directory containing factory prompt files
 PROMPTS_DIR = Path(__file__).parent / "prompts"
 
 
-def get_planner_prompt(spec_dir: Path) -> str:
+def get_prompt_path(prompt_name: str, project_dir: Path | None = None) -> Path:
+    """
+    Get the path to a prompt file, checking for project overrides first.
+
+    Args:
+        prompt_name: Name of the prompt file (without .md extension)
+        project_dir: Optional project directory to check for overrides
+
+    Returns:
+        Path to the prompt file (project override if exists, otherwise factory)
+    """
+    # Check for project override
+    if project_dir:
+        override_path = project_dir / ".auto-claude" / "prompts" / f"{prompt_name}.md"
+        if override_path.exists():
+            return override_path
+
+    # Fall back to factory prompt
+    return PROMPTS_DIR / f"{prompt_name}.md"
+
+
+def load_prompt(prompt_name: str, project_dir: Path | None = None) -> str:
+    """
+    Load a prompt file, checking for project overrides first.
+
+    Args:
+        prompt_name: Name of the prompt file (without .md extension)
+        project_dir: Optional project directory to check for overrides
+
+    Returns:
+        The prompt content
+
+    Raises:
+        FileNotFoundError: If the prompt file doesn't exist
+    """
+    prompt_path = get_prompt_path(prompt_name, project_dir)
+
+    if not prompt_path.exists():
+        raise FileNotFoundError(
+            f"Prompt not found at {prompt_path}\n"
+            f"Make sure the auto-claude/prompts/{prompt_name}.md file exists."
+        )
+
+    return prompt_path.read_text()
+
+
+def get_planner_prompt(spec_dir: Path, project_dir: Path | None = None) -> str:
     """
     Load the planner agent prompt with spec path injected.
     The planner creates subtask-based implementation plans.
 
     Args:
         spec_dir: Directory containing the spec.md file
+        project_dir: Optional project directory to check for prompt overrides
 
     Returns:
         The planner prompt content with spec path
     """
-    prompt_file = PROMPTS_DIR / "planner.md"
-
-    if not prompt_file.exists():
-        raise FileNotFoundError(
-            f"Planner prompt not found at {prompt_file}\n"
-            "Make sure the auto-claude/prompts/planner.md file exists."
-        )
-
-    prompt = prompt_file.read_text()
+    prompt = load_prompt("planner", project_dir)
 
     # Inject spec directory information at the beginning
     spec_context = f"""## SPEC LOCATION
@@ -51,25 +91,18 @@ The project root is the parent of auto-claude/. Implement code in the project ro
     return spec_context + prompt
 
 
-def get_coding_prompt(spec_dir: Path) -> str:
+def get_coding_prompt(spec_dir: Path, project_dir: Path | None = None) -> str:
     """
     Load the coding agent prompt with spec path injected.
 
     Args:
         spec_dir: Directory containing the spec.md and implementation_plan.json
+        project_dir: Optional project directory to check for prompt overrides
 
     Returns:
         The coding agent prompt content with spec path
     """
-    prompt_file = PROMPTS_DIR / "coder.md"
-
-    if not prompt_file.exists():
-        raise FileNotFoundError(
-            f"Coding prompt not found at {prompt_file}\n"
-            "Make sure the auto-claude/prompts/coder.md file exists."
-        )
-
-    prompt = prompt_file.read_text()
+    prompt = load_prompt("coder", project_dir)
 
     spec_context = f"""## SPEC LOCATION
 
@@ -178,26 +211,19 @@ Subtasks with previous attempts:
         return ""
 
 
-def get_followup_planner_prompt(spec_dir: Path) -> str:
+def get_followup_planner_prompt(spec_dir: Path, project_dir: Path | None = None) -> str:
     """
     Load the follow-up planner agent prompt with spec path and key files injected.
     The follow-up planner adds new subtasks to an existing completed implementation plan.
 
     Args:
         spec_dir: Directory containing the completed spec and implementation_plan.json
+        project_dir: Optional project directory to check for prompt overrides
 
     Returns:
         The follow-up planner prompt content with paths injected
     """
-    prompt_file = PROMPTS_DIR / "followup_planner.md"
-
-    if not prompt_file.exists():
-        raise FileNotFoundError(
-            f"Follow-up planner prompt not found at {prompt_file}\n"
-            "Make sure the auto-claude/prompts/followup_planner.md file exists."
-        )
-
-    prompt = prompt_file.read_text()
+    prompt = load_prompt("followup_planner", project_dir)
 
     # Inject spec directory information at the beginning
     spec_context = f"""## SPEC LOCATION (FOLLOW-UP MODE)

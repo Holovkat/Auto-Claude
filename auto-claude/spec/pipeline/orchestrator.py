@@ -37,6 +37,28 @@ from .models import (
     rename_spec_dir_from_requirements,
 )
 
+# Import pipeline config for phase skipping
+try:
+    from pipeline_config import (
+        should_auto_approve_specs,
+        should_skip_historical_context,
+        should_skip_research,
+        should_skip_self_critique,
+    )
+except ImportError:
+    # Fallback if pipeline_config not available
+    def should_skip_research(project_dir):
+        return True
+
+    def should_skip_self_critique(project_dir):
+        return True
+
+    def should_skip_historical_context(project_dir):
+        return True
+
+    def should_auto_approve_specs(project_dir):
+        return True
+
 
 class SpecOrchestrator:
     """Orchestrates the spec creation process with dynamic complexity adaptation."""
@@ -269,6 +291,22 @@ class SpecOrchestrator:
             p for p in all_phases_to_run if p not in ["discovery", "requirements"]
         ]
 
+        # Apply pipeline config phase skipping
+        skip_phases = []
+        if should_skip_research(self.project_dir):
+            skip_phases.append("research")
+        if should_skip_self_critique(self.project_dir):
+            skip_phases.append("self_critique")
+        if should_skip_historical_context(self.project_dir):
+            skip_phases.append("historical_context")
+
+        if skip_phases:
+            original_count = len(phases_to_run)
+            phases_to_run = [p for p in phases_to_run if p not in skip_phases]
+            skipped = original_count - len(phases_to_run)
+            if skipped > 0:
+                print(f"  {muted(f'Skipped {skipped} phase(s) per pipeline config')}")
+
         print()
         print(
             f"  Running {highlight(self.assessment.complexity.value.upper())} workflow"
@@ -296,7 +334,9 @@ class SpecOrchestrator:
                 for err in result.errors:
                     print(f"    {icon(Icons.ARROW_RIGHT)} {err}")
                 if not result.errors:
-                    print(f"    {icon(Icons.ARROW_RIGHT)} Unknown error (check task_logs.json)")
+                    print(
+                        f"    {icon(Icons.ARROW_RIGHT)} Unknown error (check task_logs.json)"
+                    )
                 print()
                 print_status(
                     "Spec creation incomplete. Fix errors and retry.", "warning"
@@ -534,6 +574,10 @@ class SpecOrchestrator:
         Returns:
             True if approved, False otherwise
         """
+        # Check pipeline config for auto-approve setting
+        if not auto_approve:
+            auto_approve = should_auto_approve_specs(self.project_dir)
+
         print()
         print_section("HUMAN REVIEW CHECKPOINT", Icons.SEARCH)
 

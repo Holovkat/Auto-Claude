@@ -36,6 +36,76 @@ export interface NotificationSettings {
 }
 
 // ============================================
+// Pipeline Configuration Types
+// ============================================
+
+/** Complexity detection mode */
+export type ComplexityMode = 'auto' | 'heuristics' | 'simple' | 'standard' | 'complex';
+
+/** QA validation settings */
+export interface QASettings {
+  /** Max QA iterations for standard/complex tasks (default: 10) */
+  maxIterations: number;
+  /** Max QA iterations for simple tasks (default: 3) */
+  simpleTaskMaxIterations: number;
+}
+
+/** Complexity detection settings */
+export interface ComplexitySettings {
+  /** Default complexity mode (default: 'heuristics') */
+  mode: ComplexityMode;
+  /** Use AI assessment for complexity (default: false) */
+  useAiAssessment: boolean;
+  /** AI provider for complexity assessment (default: 'droid') */
+  aiProvider: 'droid' | 'claude' | 'openai' | 'gemini' | 'ollama';
+}
+
+/** Phase optimization settings */
+export interface PhaseSettings {
+  /** Skip research phase when no external deps (default: true) */
+  skipResearch: boolean;
+  /** Skip self-critique phase (default: true) */
+  skipSelfCritique: boolean;
+  /** Skip historical context phase (default: true) */
+  skipHistoricalContext: boolean;
+}
+
+/** Approval settings */
+export interface ApprovalSettings {
+  /** Auto-approve specs without review checkpoint (default: true) */
+  autoApproveSpecs: boolean;
+}
+
+/** Complete pipeline configuration */
+export interface PipelineConfig {
+  qa: QASettings;
+  complexity: ComplexitySettings;
+  phases: PhaseSettings;
+  approval: ApprovalSettings;
+}
+
+/** Default pipeline configuration values */
+export const DEFAULT_PIPELINE_CONFIG: PipelineConfig = {
+  qa: {
+    maxIterations: 10,
+    simpleTaskMaxIterations: 3,
+  },
+  complexity: {
+    mode: 'heuristics',
+    useAiAssessment: false,
+    aiProvider: 'droid',
+  },
+  phases: {
+    skipResearch: true,
+    skipSelfCritique: true,
+    skipHistoricalContext: true,
+  },
+  approval: {
+    autoApproveSpecs: true,
+  },
+};
+
+// ============================================
 // Context Types (Project Index & Memories)
 // ============================================
 

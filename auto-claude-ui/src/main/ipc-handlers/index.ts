@@ -30,6 +30,7 @@ import { registerDockerHandlers } from './docker-handlers';
 import { registerAppUpdateHandlers } from './app-update-handlers';
 import { registerKBAMemoryHandlers } from './kba-memory-handlers';
 import { registerDocsGenerationHandlers } from './docs-generation-handlers';
+import { registerPipelineHandlers } from './pipeline-handlers';
 import { notificationService } from '../notification-service';
 
 /**
@@ -103,6 +104,9 @@ export function setupIpcHandlers(
   // Documentation generation handlers
   registerDocsGenerationHandlers(getMainWindow);
 
+  // Pipeline configuration and prompt editor handlers
+  registerPipelineHandlers();
+
   // App auto-update handlers
   registerAppUpdateHandlers();
 
@@ -129,5 +133,6 @@ export {
   registerDockerHandlers,
   registerAppUpdateHandlers,
   registerKBAMemoryHandlers,
-  registerDocsGenerationHandlers
+  registerDocsGenerationHandlers,
+  registerPipelineHandlers
 };

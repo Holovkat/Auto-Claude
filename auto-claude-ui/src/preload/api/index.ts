@@ -6,6 +6,7 @@ import { FileAPI, createFileAPI } from './file-api';
 import { AgentAPI, createAgentAPI } from './agent-api';
 import { IdeationAPI, createIdeationAPI } from './modules/ideation-api';
 import { AppUpdateAPI, createAppUpdateAPI } from './app-update-api';
+import { PipelineAPI, createPipelineAPI } from './modules/pipeline-api';
 
 export interface ElectronAPI extends
   ProjectAPI,
@@ -15,7 +16,8 @@ export interface ElectronAPI extends
   FileAPI,
   AgentAPI,
   IdeationAPI,
-  AppUpdateAPI {}
+  AppUpdateAPI,
+  PipelineAPI {}
 
 export const createElectronAPI = (): ElectronAPI => ({
   ...createProjectAPI(),
@@ -25,7 +27,8 @@ export const createElectronAPI = (): ElectronAPI => ({
   ...createFileAPI(),
   ...createAgentAPI(),
   ...createIdeationAPI(),
-  ...createAppUpdateAPI()
+  ...createAppUpdateAPI(),
+  ...createPipelineAPI()
 });
 
 // Export individual API creators for potential use in tests or specialized contexts
@@ -37,7 +40,8 @@ export {
   createFileAPI,
   createAgentAPI,
   createIdeationAPI,
-  createAppUpdateAPI
+  createAppUpdateAPI,
+  createPipelineAPI
 };
 
 export type {
@@ -48,5 +52,6 @@ export type {
   FileAPI,
   AgentAPI,
   IdeationAPI,
-  AppUpdateAPI
+  AppUpdateAPI,
+  PipelineAPI
 };
