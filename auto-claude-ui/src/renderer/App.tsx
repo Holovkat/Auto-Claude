@@ -69,6 +69,7 @@ export function App() {
   const [pendingProject, setPendingProject] = useState<Project | null>(null);
   const [isInitializing, setIsInitializing] = useState(false);
   const [skippedInitProjectId, setSkippedInitProjectId] = useState<string | null>(null);
+  const [initError, setInitError] = useState<string | null>(null);
 
   // Get selected project
   const selectedProject = projects.find((p) => p.id === selectedProjectId);
@@ -236,12 +237,19 @@ export function App() {
     if (!pendingProject) return;
 
     setIsInitializing(true);
+    setInitError(null);
     try {
       const result = await initializeProject(pendingProject.id);
       if (result?.success) {
         setShowInitDialog(false);
         setPendingProject(null);
+        setInitError(null);
+      } else {
+        // Show error message to user
+        setInitError(result?.error || 'Failed to initialize Auto Claude');
       }
+    } catch (err) {
+      setInitError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
       setIsInitializing(false);
     }
@@ -253,6 +261,7 @@ export function App() {
     }
     setShowInitDialog(false);
     setPendingProject(null);
+    setInitError(null);
   };
 
   const handleGoToTask = (taskId: string) => {
@@ -445,6 +454,19 @@ export function App() {
                       <p className="font-medium text-warning">Source path not configured</p>
                       <p className="text-muted-foreground mt-1">
                         Please set the Auto Claude source path in App Settings before initializing.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {initError && (
+                <div className="mt-4 rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
+                    <div>
+                      <p className="font-medium text-destructive">Initialization failed</p>
+                      <p className="text-muted-foreground mt-1">
+                        {initError}
                       </p>
                     </div>
                   </div>
